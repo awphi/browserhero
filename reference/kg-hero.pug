@@ -1,0 +1,38 @@
+extends ../templates/demo-layout
+
+block demo-head
+  link(rel='stylesheet', type='text/css', href='/built/styles/demos/css/kg-hero.css')
+  script(src='/built-sdk-bundles/demos/kg-hero.js', defer)
+
+block demo-content
+  #info
+    img
+    span#title
+    hr
+    span#artist
+    span#album
+    span#year
+  #info-left-bottom
+    label Auto-strum?
+      input#autostrum(type='checkbox') 
+    label Volume:
+      input(type="range" min="0" max="1" step="0.05" value="0.1")#volume
+    label Difficulty:
+      select#difficulty
+        option Easy
+        option Medium
+        option Hard
+        option Expert
+    label#picker-label Upload Song (.zip)
+      input(type="file" accept=".zip")#picker
+  
+  #fade
+  #info-left
+    span#score Score: 0/0 (100%)
+  #kg
+    #n1.note.hidden
+    #n2.note.hidden
+    #n3.note.hidden
+    #n4.note.hidden
+    #n5.note.hidden
+  
