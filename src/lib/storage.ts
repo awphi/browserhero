@@ -10,7 +10,7 @@ const basePath = "/tmp/browserhero";
 const kvFilePath = path.resolve(basePath, "manifest.json");
 const archiveExtensions = Object.values(archiveFileExtensions);
 
-// super simple on-disk KV storage
+// super simple on-disk KV storage - in the future we can migrate these to a cloud KV like vercel KV or redis
 export const songMetadataKv = new Keyv({
   store: new KeyvFile({
     filename: kvFilePath,
