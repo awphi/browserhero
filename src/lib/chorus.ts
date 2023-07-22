@@ -61,7 +61,6 @@ export interface ChorusAPISong {
       [key in Difficulty]?: number;
     };
   };
-  storedObjectUrls?: Record<string, string>;
   isProcessing: boolean;
 }
 
@@ -114,7 +113,6 @@ export function ensureSong(song: unknown): ChorusAPISong | null {
 
   // we add the isProcessing key but omit the storedObjectUrls as undefined implies we don't have them yet
   songObjectMut.isProcessing = false;
-  songObjectMut.storedObjectUrls = {};
 
   return songObjectMut as ChorusAPISong;
 }
