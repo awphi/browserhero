@@ -1,8 +1,9 @@
 import { ensureSongs } from "$lib/chorus";
+import { songMetadataKv } from "$lib/storage";
 import { json } from "@sveltejs/kit";
 import isFinite from "lodash/isFinite";
 
-// /api/searchs-songs
+// GET /api/searchs-songs?query=""&from=0
 export async function GET(event) {
   const params = event.url.searchParams;
   const fromIn = Number.parseInt(params.get("from")!);
@@ -23,15 +24,9 @@ export async function GET(event) {
   const songs = JSON.parse(text).songs;
   const validatedSongs = ensureSongs(songs);
 
-  // TODO add validatedSongs to the KV store
-  /*   for (const validatedSong of validatedSongs) {
-    const songRef = chorusRef.child(validatedSong.id.toString());
-    songRef.get().then((v) => {
-      if (!v.exists()) {
-        songRef.set(validatedSong);
-      }
-    });
-  } */
+  for (const song of validatedSongs) {
+    songMetadataKv.set(song.id.toString(), song);
+  }
 
   return json({ songs: validatedSongs, originalLength: songs.length });
 }
