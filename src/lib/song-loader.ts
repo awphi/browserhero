@@ -161,19 +161,19 @@ async function processRawBundle(rawBundle: RawSongBundle): Promise<SongBundle> {
 export async function loadSongZipFromUrl(url: string): Promise<SongBundle> {
   const archive = await fetch(url);
   const buf = await archive.arrayBuffer();
-  return loadSongZip(buf, archive.headers.get("Content-Type")!);
+  return loadSongArchive(buf, archive.headers.get("Content-Type")!);
 }
 
 export async function loadSongZipFromFile(file: File): Promise<SongBundle> {
   const buf = await file.arrayBuffer();
-  return loadSongZip(buf, file.type);
+  return loadSongArchive(buf, file.type);
 }
 
-export async function loadSongZip(
+export async function loadSongArchive(
   buf: ArrayBuffer,
-  mimeType: string
+  ext: string
 ): Promise<SongBundle> {
-  const unarchived = await unarchive(mimeType, buf);
+  const unarchived = await unarchive(ext, buf);
   const files = Object.fromEntries(
     Object.entries(unarchived).map(([key, value]) => {
       return [key, value.buffer];

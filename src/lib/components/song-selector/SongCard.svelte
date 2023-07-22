@@ -19,7 +19,12 @@
   }
 
   async function play(): Promise<void> {
-    // TODO load song
+    // TODO exponential backoff if we get told that the archive is processing
+    // preferably with some nice status toasts
+    const archiveRes = await fetch(`/api/get-song-archive/${song.id}`);
+    const archive = await archiveRes.arrayBuffer();
+    console.log(archive);
+
     /*     console.log("Loading:", song);
     const bundle = await ChorusAPI.fetchSong(song);
     console.log("Loaded:", bundle);

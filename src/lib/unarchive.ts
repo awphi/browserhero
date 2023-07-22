@@ -1,23 +1,6 @@
 import SevenZip from "7z-wasm";
 import sevenZipWasmUrl from "7z-wasm/7zz.wasm?url";
-
-const mimeTypeToFileExt = {
-  "application/x-zip-compressed": ".zip",
-  "application/rar": ".rar",
-  "application/zip": ".zip",
-  "application/x-7z-compressed": ".7z",
-} as const;
-
-type ArchiveMimeType = keyof typeof mimeTypeToFileExt;
-type ArchiveFileExtension = (typeof mimeTypeToFileExt)[ArchiveMimeType];
-
-function getFileExtensionFromMimeType(mimeType: string): ArchiveFileExtension {
-  if (!(mimeType in mimeTypeToFileExt)) {
-    throw new Error(`Cannot unarchive type "${mimeType}".`);
-  }
-
-  return mimeTypeToFileExt[mimeType as ArchiveMimeType];
-}
+import mime from "mime-types";
 
 export async function unarchive(
   mimeType: string,
@@ -28,7 +11,7 @@ export async function unarchive(
     // suppress the console in production
     stdout: import.meta.env.PROD ? () => {} : undefined,
   });
-  const archiveName = `archive${getFileExtensionFromMimeType(mimeType)}`;
+  const archiveName = `archive${mime.lookup(mimeType)}`;
   const arr = new Uint8Array(archiveData);
 
   // write an archive to the virtual file system
