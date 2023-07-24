@@ -22,8 +22,13 @@
     // TODO exponential backoff if we get told that the archive is processing
     // preferably with some nice status toasts
     const archiveRes = await fetch(`/api/get-song-archive/${song.id}`);
-    const archive = await archiveRes.arrayBuffer();
-    console.log(archive);
+    if (archiveRes.status === 200) {
+      const archive = await archiveRes.arrayBuffer();
+      console.log(archive);
+    } else if (archiveRes.status === 202) {
+      const message = await archiveRes.json();
+      console.log(message);
+    }
 
     /*     console.log("Loading:", song);
     const bundle = await ChorusAPI.fetchSong(song);
@@ -90,6 +95,8 @@
     <p class="text-xs mt-1">
       Charted by:
       {abbreviate(song.charter, 54)} ({new Date(song.uploadedAt).getFullYear()})
+      <br />
+      {song.link}
     </p>
   {/if}
 </div>
