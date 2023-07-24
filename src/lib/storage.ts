@@ -8,7 +8,6 @@ import type { ChorusAPISong } from "./chorus";
 import { google } from "googleapis";
 import JSZip from "jszip";
 import { archiveExtensions, getFileExt } from "./util";
-import fetch from "node-fetch";
 
 const basePath = "/tmp/browserhero";
 const kvFilePath = path.resolve(basePath, "manifest.json");
