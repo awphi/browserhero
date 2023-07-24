@@ -1,6 +1,6 @@
 import SevenZip from "7z-wasm";
 import sevenZipWasmUrl from "7z-wasm/7zz.wasm?url";
-import mime from "mime-types";
+import { getExtension } from "./util";
 
 export async function unarchive(
   mimeType: string,
@@ -11,7 +11,7 @@ export async function unarchive(
     // suppress the console in production
     stdout: import.meta.env.PROD ? () => {} : undefined,
   });
-  const archiveName = `archive${mime.lookup(mimeType)}`;
+  const archiveName = `archive${getExtension(mimeType)}`;
   const arr = new Uint8Array(archiveData);
 
   // write an archive to the virtual file system

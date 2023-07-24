@@ -4,9 +4,10 @@ import {
   saveSongArchiveToDisk,
   songMetadataKv,
 } from "$lib/storage";
+import { getMimeType } from "$lib/util.js";
 import { error, json } from "@sveltejs/kit";
 import isEmpty from "lodash/isEmpty";
-import mime from "mime-types";
+import mime from "mime";
 
 // GET /api/get-song-archive/[id]
 export async function GET(event) {
@@ -27,7 +28,7 @@ export async function GET(event) {
       const { stream, ext } = maybeStream;
       return new Response(stream, {
         headers: {
-          "Content-Type": mime.lookup(ext) as string,
+          "Content-Type": getMimeType(ext)!,
         },
         status: 200,
       });
