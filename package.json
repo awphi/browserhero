@@ -4,6 +4,7 @@
   "private": true,
   "main": "index.js",
   "scripts": {
+    "start": "node .",
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
