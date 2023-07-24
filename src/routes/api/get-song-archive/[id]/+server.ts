@@ -6,8 +6,6 @@ import {
 } from "$lib/storage";
 import { getMimeType } from "$lib/util.js";
 import { error, json } from "@sveltejs/kit";
-import isEmpty from "lodash/isEmpty";
-import mime from "mime";
 
 // GET /api/get-song-archive/[id]
 export async function GET(event) {
