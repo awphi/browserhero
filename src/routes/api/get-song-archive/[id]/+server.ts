@@ -31,18 +31,19 @@ export async function GET(event) {
         },
         status: 200,
       });
-    } else {
-      try {
-        await setSongIsProcessing(song.id, true);
-        await saveSongArchiveToDisk(song.id, song.link);
-      } catch (e: any) {
-        throw error(500, e.message);
-      } finally {
-        await setSongIsProcessing(song.id, false);
-      }
-      return json("Archive is being processed.", { status: 202 });
     }
   } catch (e: any) {
     throw error(500, e.message);
   }
+
+  try {
+    await setSongIsProcessing(song.id, true);
+    await saveSongArchiveToDisk(song.id, song.link);
+  } catch (e: any) {
+    throw error(500, e.message);
+  } finally {
+    await setSongIsProcessing(song.id, false);
+  }
+
+  return json("Archive is being processed.", { status: 202 });
 }
