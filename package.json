@@ -32,12 +32,14 @@
 		"@phosphor-icons/web": "^2.0.3",
 		"7z-wasm": "^1.0.2",
 		"chart2json": "^0.5.1",
+		"exponential-backoff": "^3.1.1",
 		"googleapis": "^122.0.0",
 		"ini": "^4.1.1",
 		"jszip": "^3.10.1",
 		"keyv": "^4.5.3",
 		"keyv-file": "^0.2.0",
 		"lodash": "^4.17.21",
-		"midi-file": "^1.2.4"
+		"midi-file": "^1.2.4",
+		"node-fetch": "^3.3.1"
 	}
 }
