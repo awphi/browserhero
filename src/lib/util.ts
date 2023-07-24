@@ -9,12 +9,18 @@ const mimeTypeToExtensions: Record<string, string> = {
 };
 const extensionsToMimeTypes = invert(mimeTypeToExtensions);
 
-export function getExtension(mime: string): string | undefined {
+export const archiveExtensions = new Set(Object.values(mimeTypeToExtensions));
+
+export function getExtFromMime(mime: string): string | undefined {
   return mimeTypeToExtensions[mime];
 }
 
-export function getMimeType(ext: string): string | undefined {
+export function getMimeFromExt(ext: string): string | undefined {
   return extensionsToMimeTypes[ext];
+}
+
+export function getFileExt(str: string): string {
+  return str.split(".").pop()!;
 }
 
 export function formatTimespan(secs: number) {

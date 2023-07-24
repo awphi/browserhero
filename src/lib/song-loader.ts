@@ -2,9 +2,10 @@ import Parser, { type Chart } from "chart2json";
 import { mid2Chart } from "./mid2chart";
 import ini from "ini";
 import { unarchive } from "./unarchive";
+import { getFileExt } from "./util";
 
 const imageExtensions = ["png", "jpg", "jpeg"];
-const audioExtensions = ["ogg", "mp3"];
+const audioExtensions = ["ogg", "mp3", "opus"];
 
 export type RawSongBundle = Record<string, ArrayBufferLike>;
 
@@ -35,17 +36,13 @@ function makeBlobMap(
   );
 }
 
-function getFileExtension(str: string): string {
-  return str.split(".").pop()!;
-}
-
 async function getMetadata(
   rawBundle: RawSongBundle
 ): Promise<Pick<SongBundle, "images" | "ini">> {
   const images = makeBlobMap(
     rawBundle,
     (key) => imageExtensions.some((ext) => key.endsWith(ext)),
-    (key) => `image/${getFileExtension(key)}`
+    (key) => `image/${getFileExt(key)}`
   );
   let songIni: SongBundle["ini"] | undefined = undefined;
 
@@ -134,8 +131,10 @@ function getChartData(rawBundle: RawSongBundle): string {
 async function processRawBundle(rawBundle: RawSongBundle): Promise<SongBundle> {
   const audio = makeBlobMap(
     rawBundle,
-    (key) => audioExtensions.some((ext) => key.endsWith(ext)),
-    (key) => `audio/${getFileExtension(key)}`
+    (key) =>
+      audioExtensions.some((ext) => key.endsWith(ext)) &&
+      !key.startsWith("preview"),
+    (key) => `audio/${getFileExt(key)}`
   );
 
   if (Object.keys(audio).length > 0) {
@@ -158,13 +157,18 @@ async function processRawBundle(rawBundle: RawSongBundle): Promise<SongBundle> {
   }
 }
 
-export async function loadSongZipFromUrl(url: string): Promise<SongBundle> {
-  const archive = await fetch(url);
-  const buf = await archive.arrayBuffer();
-  return loadSongArchive(buf, archive.headers.get("Content-Type")!);
+export async function loadSongArchiveFromUrl(url: string): Promise<SongBundle> {
+  return loadSongArchiveFromResponse(await fetch(url));
 }
 
-export async function loadSongZipFromFile(file: File): Promise<SongBundle> {
+export async function loadSongArchiveFromResponse(
+  res: Response
+): Promise<SongBundle> {
+  const buf = await res.arrayBuffer();
+  return loadSongArchive(buf, res.headers.get("Content-Type")!);
+}
+
+export async function loadSongArchiveFromFile(file: File): Promise<SongBundle> {
   const buf = await file.arrayBuffer();
   return loadSongArchive(buf, file.type);
 }
@@ -177,34 +181,6 @@ export async function loadSongArchive(
   const files = Object.fromEntries(
     Object.entries(unarchived).map(([key, value]) => {
       return [key, value.buffer];
-    })
-  );
-
-  return processRawBundle(files);
-}
-
-export async function loadSongFromUrls(
-  links: Record<string, string>
-): Promise<SongBundle> {
-  const files: RawSongBundle = {};
-  await Promise.all(
-    Object.keys(links).map((key) => {
-      let fileName = key;
-      const link = links[key];
-
-      if (key === "mid") {
-        fileName = "chart.mid";
-      } else if (key === "ini") {
-        fileName = "song.ini";
-      } else if (key === "chart") {
-        fileName = "notes.chart";
-      }
-
-      return fetch(link)
-        .then((r) => r.arrayBuffer())
-        .then((buf) => {
-          files[fileName] = buf;
-        });
     })
   );
 

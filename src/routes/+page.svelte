@@ -5,7 +5,7 @@
   import { onMount } from "svelte";
   import { activeSong } from "$lib/stores";
   import SongMetaDisplay from "$lib/components/SongMetaDisplay.svelte";
-  import { loadSongZipFromUrl } from "$lib/song-loader";
+  import { loadSongArchiveFromUrl } from "$lib/song-loader";
 
   let activeSongPoint = 0;
   let paused = true;
@@ -20,7 +20,7 @@
       "/test-archive.zip",
       import.meta.url
     ).toString();
-    const bundle = await loadSongZipFromUrl(testArchiveUrl);
+    const bundle = await loadSongArchiveFromUrl(testArchiveUrl);
     activeSong.set(bundle);
   });
 </script>

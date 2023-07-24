@@ -2,9 +2,10 @@ import type { ChorusAPISong } from "$lib/chorus";
 import {
   getSongArchiveStream,
   saveSongArchiveToDisk,
+  setSongIsProcessing,
   songMetadataKv,
 } from "$lib/storage";
-import { getMimeType } from "$lib/util.js";
+import { getMimeFromExt } from "$lib/util.js";
 import { error, json } from "@sveltejs/kit";
 
 // GET /api/get-song-archive/[id]
@@ -26,12 +27,19 @@ export async function GET(event) {
       const { stream, ext } = maybeStream;
       return new Response(stream, {
         headers: {
-          "Content-Type": getMimeType(ext)!,
+          "Content-Type": getMimeFromExt(ext)!,
         },
         status: 200,
       });
     } else {
-      saveSongArchiveToDisk(id);
+      try {
+        await setSongIsProcessing(song.id, true);
+        await saveSongArchiveToDisk(song.id, song.link);
+      } catch (e: any) {
+        throw error(500, e.message);
+      } finally {
+        await setSongIsProcessing(song.id, false);
+      }
       return json("Archive is being processed.", { status: 202 });
     }
   } catch (e: any) {

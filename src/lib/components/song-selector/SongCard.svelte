@@ -1,11 +1,16 @@
 <script lang="ts">
   import {
+    loadSongArchiveFromResponse,
+    type SongBundle,
+  } from "$lib/song-loader";
+  import {
     formatInstrumentName,
     type ChorusAPISong,
     type Instrument,
     difficulties,
   } from "../../chorus";
   import { activeSong } from "../../stores";
+  import { backOff } from "exponential-backoff";
 
   export let song: ChorusAPISong;
   let clazz: string;
@@ -18,22 +23,33 @@
     return str.length > lim ? str.slice(0, lim) + "..." : str;
   }
 
-  async function play(): Promise<void> {
-    // TODO exponential backoff if we get told that the archive is processing
-    // preferably with some nice status toasts
-    const archiveRes = await fetch(`/api/get-song-archive/${song.id}`);
-    if (archiveRes.status === 200) {
-      const archive = await archiveRes.arrayBuffer();
-      console.log(archive);
-    } else if (archiveRes.status === 202) {
-      const message = await archiveRes.json();
-      console.log(message);
+  async function fetchSongArchive(): Promise<Response> {
+    const res = await fetch(`/api/get-song-archive/${song.id}`);
+    if (res.status === 200) {
+      return res;
     }
 
-    /*     console.log("Loading:", song);
-    const bundle = await ChorusAPI.fetchSong(song);
-    console.log("Loaded:", bundle);
-    activeSong.set(bundle); */
+    // throw to force backoff to go again
+    const message = await res.json();
+    throw message;
+  }
+
+  async function play(): Promise<void> {
+    try {
+      const res = await backOff(fetchSongArchive, {
+        retry: (e, n) => {
+          // TODO toasts for the status of this + disable loading other songs
+          console.log(e, n);
+          return true;
+        },
+      });
+      const bundle = await loadSongArchiveFromResponse(res);
+      activeSong.set(bundle);
+    } catch (e) {
+      // TODO error message for failing
+      console.error(e);
+      activeSong.set(undefined);
+    }
   }
 
   const instrumentIconMap: Record<Instrument, string> = {
@@ -92,12 +108,17 @@
     {/each}
   </div>
   {#if song.uploadedAt && song.charter}
-    <p class="text-xs mt-1">
-      Charted by:
-      {abbreviate(song.charter, 54)} ({new Date(song.uploadedAt).getFullYear()})
-      <br />
-      {song.link}
-    </p>
+    <div class=" mt-1 flex gap-1 items-center">
+      <p class="text-xs">
+        Charted by:
+        {abbreviate(song.charter, 54)} ({new Date(
+          song.uploadedAt
+        ).getFullYear()})
+      </p>
+      <a class="h-5 hover:contrast-200" href={song.link} target="_blank">
+        <i class="ph-fill ph-link" />
+      </a>
+    </div>
   {/if}
 </div>
 

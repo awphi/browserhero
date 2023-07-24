@@ -7,13 +7,11 @@ import { Readable } from "stream";
 import type { ChorusAPISong } from "./chorus";
 import { google } from "googleapis";
 import JSZip from "jszip";
-import { getExtension } from "./util";
+import { archiveExtensions, getFileExt } from "./util";
+import fetch from "node-fetch";
 
-const archiveFileExtensions = [".zip", ".rar", ".7z"];
 const basePath = "/tmp/browserhero";
 const kvFilePath = path.resolve(basePath, "manifest.json");
-const archiveExtensions = Object.values(archiveFileExtensions);
-const textEncoder = new TextEncoder();
 
 const driveApi = google.drive({
   auth: new google.auth.GoogleAuth({
@@ -29,13 +27,6 @@ export const songMetadataKv = new Keyv({
     filename: kvFilePath,
   }),
   namespace: "songs_meta",
-});
-
-export const songsObjectKv = new Keyv({
-  store: new KeyvFile({
-    filename: kvFilePath,
-  }),
-  namespace: "songs_objects",
 });
 
 // for now we just store archives on the disk of the server and serve them up straight from fs via streams
@@ -59,12 +50,6 @@ export function getSongArchiveStream(id: string):
   return false;
 }
 
-/*
-const res = await driveApi.files.get({
-  fileId: "1HLzX84-JKtG-C5itGJPh_3N2l_hALMlz",
-});
- */
-
 function getGoogleDriveFileId(url: string): string | undefined {
   const [, fileId] =
     url.match(/https:\/\/drive.google.com\/file\/d\/([^&]+)\/view/) ||
@@ -75,20 +60,19 @@ function getGoogleDriveFileId(url: string): string | undefined {
 }
 
 async function fetchGoogleDriveFile(fileId: string): Promise<ArrayBuffer> {
-  const res = await driveApi.files.get({
-    fileId: fileId,
-    alt: "media",
-  });
-  return await new Blob([res.data as string], {
-    type: "application/octet-stream",
-  }).arrayBuffer();
+  const res = await driveApi.files.get(
+    {
+      fileId,
+      alt: "media",
+    },
+    { responseType: "arraybuffer" }
+  );
+  return res.data as ArrayBuffer;
 }
 
-async function fetchAndZipGoogleDriveFolder(
-  fileId: string
-): Promise<ArrayBuffer> {
+async function fetchAndZipGoogleDriveFolder(fileId: string): Promise<Buffer> {
+  console.log(`Loading song archive from gdrive folder: - "${fileId}".`);
   const query = `\'${fileId}\' in parents`;
-  // TODO download folder + zip
   const { data: folderContent } = await driveApi.files.list({
     q: query,
   });
@@ -100,48 +84,56 @@ async function fetchAndZipGoogleDriveFolder(
     );
   }
 
-  const zip = new JSZip();
   const files: [string, ArrayBuffer][] = await Promise.all(
-    folderContent.files.map(async (file) => [
-      file.name as string,
-      await fetchGoogleDriveFile(file.id!),
-    ])
+    folderContent.files.map(async (file) => {
+      const arrayBuffer = await fetchGoogleDriveFile(file.id!);
+      return [file.name!, arrayBuffer];
+    })
   );
 
+  console.log(`Zipping gdrive folder contents - "${fileId}".`);
+
+  const zip = new JSZip();
+  const folder = zip.folder(fileId)!;
   for (const [name, dat] of files) {
-    console.log(name, typeof dat, dat);
-    zip.file(name, dat);
+    folder.file(name, dat);
   }
-  return zip.generateAsync({ type: "arraybuffer" });
+  return zip.generateAsync({ type: "nodebuffer" });
 }
 
-export async function saveSongArchiveToDisk(id: string): Promise<void> {
+export async function setSongIsProcessing(
+  id: number,
+  state: boolean
+): Promise<boolean> {
   const song = (await songMetadataKv.get(id.toString())) as ChorusAPISong;
-  //song.isProcessing = true;
-  //await songMetadataKv.set(song.id.toString(), song);
-  const fileId = getGoogleDriveFileId(song.link);
-  if (fileId) {
-    console.log(song.link, fileId);
+  song.isProcessing = state;
+  return songMetadataKv.set(song.id.toString(), song);
+}
 
-    try {
-      const { data: meta } = await driveApi.files.get({
-        fileId,
-      });
-      let zip: ArrayBuffer;
-      let ext: string = "zip";
-      if (meta.mimeType === "application/vnd.google-apps.folder") {
-        zip = await fetchAndZipGoogleDriveFolder(fileId);
-      } else {
-        zip = await fetchGoogleDriveFile(fileId);
-        ext = getExtension(meta.mimeType!)!;
-      }
-      console.log(zip, ext, fileId);
-      return fsPromises.writeFile(`./${id}.${ext}`, Buffer.from(zip));
-    } catch (e) {
-      console.error(e);
+export async function saveSongArchiveToDisk(
+  id: number,
+  link: string
+): Promise<void> {
+  const fileId = getGoogleDriveFileId(link);
+  if (fileId) {
+    const { data: meta } = await driveApi.files.get({
+      fileId,
+    });
+    let zipBuf: Buffer;
+    let ext: string = "zip";
+    if (meta.mimeType === "application/vnd.google-apps.folder") {
+      zipBuf = await fetchAndZipGoogleDriveFolder(fileId);
+    } else {
+      console.log(`Saving archive from gdrive file - "${fileId}"`);
+      const arrayBuffer = await fetchGoogleDriveFile(fileId);
+      zipBuf = Buffer.from(arrayBuffer);
+      ext = getFileExt(meta.name!);
     }
+    const filename = `${id}.${ext}`;
+    console.log(`Saving archive from gdrive - "${fileId}" @ ${filename}`);
+    return fsPromises.writeFile(path.resolve(basePath, filename), zipBuf);
   } else {
-    console.error(`Could not determine file ID from link: ${song.link}`);
+    throw `Archive source not implemented - "${link}"`;
   }
 
   // TODO download the song archive via the gdrive API, zip it up (if needed) and store it at ${basePath}/${id}.[zip|7z|rar]
