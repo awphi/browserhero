@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "start": "node build",
+    "start": "node -r dotenv/config build",
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
@@ -33,6 +33,7 @@
     "@phosphor-icons/web": "^2.0.3",
     "7z-wasm": "^1.0.2",
     "chart2json": "^0.5.1",
+    "dotenv": "^16.3.1",
     "exponential-backoff": "^3.1.1",
     "googleapis": "^122.0.0",
     "ini": "^4.1.1",
