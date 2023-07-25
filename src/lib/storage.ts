@@ -10,10 +10,15 @@ import JSZip from "jszip";
 import { archiveExtensions, getFileExt } from "./util";
 import { env } from "$env/dynamic/private";
 
-const basePath = "/tmp/browserhero";
+const basePath = import.meta.env.DEV
+  ? "/tmp/browserhero"
+  : "/browserhero-storage";
 const kvFilePath = path.resolve(basePath, "manifest.json");
 
-fs.mkdirSync(basePath, { recursive: true });
+if (import.meta.env.DEV && !fs.existsSync(basePath)) {
+  console.log(`Creating ${basePath}.`);
+  fs.mkdirSync(basePath, { recursive: true });
+}
 
 const driveApi = google.drive({
   auth: new google.auth.GoogleAuth({
@@ -31,8 +36,8 @@ export const songMetadataKv = new Keyv({
   namespace: "songs_meta",
 });
 
-// for now we just store archives on the disk of the server and serve them up straight from fs via streams
-// - in the future we can migrate these to an S3 bucket
+// for now we just store archives on the disk of the server and stream them up straight from fs
+// - in the future we can migrate these to an S3 bucket or similar
 export function getSongArchiveStream(id: string):
   | {
       stream: ReadableStream;
