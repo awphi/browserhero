@@ -1,7 +1,11 @@
 <script lang="ts">
   import DUMMY_DATA from "../../assets/dummy-data";
   import SongCard from "./SongCard.svelte";
-  import { songSelectorSearchTerm, songSelectorSongs } from "../../stores";
+  import {
+    activeSongState,
+    songSelectorSearchTerm,
+    songSelectorSongs,
+  } from "../../stores";
   import { onDestroy, onMount } from "svelte";
   import type { ChorusAPISong } from "../../chorus";
 
@@ -88,7 +92,7 @@
       {#if searching}
         <span class="loading loading-infinity h-full" />
       {:else}
-        <i class="ph ph-magnifying-glass text-lg" />
+        <i class="ph-fill ph-magnifying-glass text-lg" />
       {/if}
     </button>
   </div>
@@ -97,7 +101,11 @@
     class:disabled={isDummy}
   >
     {#each loadedSongs as song}
-      <SongCard {song} class={isDummy ? "blur-sm" : ""} />
+      <SongCard
+        disabled={$activeSongState === "loading"}
+        {song}
+        class={isDummy ? "blur-sm" : ""}
+      />
     {/each}
     {#if canExtend}
       <button

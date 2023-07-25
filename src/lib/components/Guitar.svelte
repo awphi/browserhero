@@ -61,7 +61,11 @@
     return dt === 0 ? 0 : (bpm / 60) * resolution * dt;
   }
 
-  function getFretPosition(idx: number, point: number): number {
+  function getFretPosition(
+    idx: number,
+    guitarHeight: number,
+    point: number
+  ): number {
     // 110 is the 50px offset of the notebar + the note button radius (60px)
     const guitarHeightFromNotebar = guitarHeight - 110;
     const totalOffset = point + guitarHeightFromNotebar;
@@ -126,7 +130,7 @@
       class="fret outline-base-100"
       class:opacity-100={i % 4 === 0}
       class:opacity-30={i % 4 !== 0}
-      style={`top: ${getFretPosition(i, point)}px;`}
+      style={`top: ${getFretPosition(i, guitarHeight, point)}px;`}
     />
   {/each}
 </div>
@@ -147,8 +151,7 @@
   }
 
   .string {
-    height: calc(100% - 60px);
-    @apply absolute outline-2 outline outline-base-200;
+    @apply h-full absolute outline-2 outline outline-base-200;
   }
 
   .button {

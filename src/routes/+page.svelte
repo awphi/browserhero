@@ -3,7 +3,7 @@
   import PausePlay from "$lib/components/PausePlay.svelte";
   import Guitar from "$lib/components/Guitar.svelte";
   import { onMount } from "svelte";
-  import { activeSong } from "$lib/stores";
+  import { activeSong, setActiveSong } from "$lib/stores";
   import SongMetaDisplay from "$lib/components/SongMetaDisplay.svelte";
   import { loadSongArchiveFromUrl } from "$lib/song-loader";
 
@@ -16,12 +16,8 @@
   });
 
   onMount(async () => {
-    const testArchiveUrl = new URL(
-      "/test-archive.zip",
-      import.meta.url
-    ).toString();
-    const bundle = await loadSongArchiveFromUrl(testArchiveUrl);
-    activeSong.set(bundle);
+    const testUrl = new URL("/test-archive.zip", import.meta.url).toString();
+    setActiveSong(() => loadSongArchiveFromUrl(testUrl));
   });
 </script>
 

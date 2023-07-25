@@ -1,18 +1,16 @@
 <script lang="ts">
-  import {
-    loadSongArchiveFromResponse,
-    type SongBundle,
-  } from "$lib/song-loader";
+  import { loadSongArchiveFromResponse } from "$lib/song-loader";
   import {
     formatInstrumentName,
     type ChorusAPISong,
     type Instrument,
     difficulties,
   } from "../../chorus";
-  import { activeSong } from "../../stores";
+  import { setActiveSong } from "../../stores";
   import { backOff } from "exponential-backoff";
 
   export let song: ChorusAPISong;
+  export let disabled: boolean;
   let clazz: string;
   let instruments: Instrument[];
   $: instruments = Object.keys(song.noteCounts) as Instrument[];
@@ -36,19 +34,20 @@
 
   async function play(): Promise<void> {
     try {
-      const res = await backOff(fetchSongArchive, {
-        retry: (e, n) => {
-          // TODO toasts for the status of this + disable loading other songs
-          console.log(e, n);
-          return true;
-        },
+      setActiveSong(async () => {
+        const res = await backOff(fetchSongArchive, {
+          retry: (e, n) => {
+            // TODO toasts for the status of this + disable loading other songs
+            console.log(e, n);
+            return true;
+          },
+          delayFirstAttempt: false,
+        });
+        return loadSongArchiveFromResponse(res);
       });
-      const bundle = await loadSongArchiveFromResponse(res);
-      activeSong.set(bundle);
     } catch (e) {
       // TODO error message for failing
       console.error(e);
-      activeSong.set(undefined);
     }
   }
 
@@ -82,7 +81,7 @@
       <hr class="w-full border-base-content border-opacity-40 mt-1" />
     </div>
 
-    <button on:click={play} class="btn btn-primary aspect-square">
+    <button {disabled} on:click={play} class="btn btn-primary aspect-square">
       <i class="ph-fill ph-play text-2xl mr-1" />
     </button>
   </div>
