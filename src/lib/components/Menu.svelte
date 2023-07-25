@@ -28,7 +28,9 @@
 
 <div class={`flex ${clazz}`}>
   {#if openTab !== null}
-    <div class="bg-neutral my-[1px] p-4 rounded-br-lg h-[80vh] w-[500px]">
+    <div
+      class="bg-neutral outline-1 outline outline-base-100 my-[1px] p-4 rounded-br-lg h-[80vh] w-[500px]"
+    >
       <svelte:component this={tabs[openTab].component} />
     </div>
   {/if}

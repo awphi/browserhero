@@ -22,7 +22,9 @@
   export { clazz as class };
 </script>
 
-<div class={`${clazz} bg-neutral px-2 py-1 rounded-md w-80`}>
+<div
+  class={`${clazz}  outline-1 outline outline-base-100 bg-neutral px-2 py-1 rounded-md w-80`}
+>
   <h1 class="text-primary-content text-2xl font-bold">
     {song.ini.name}
   </h1>

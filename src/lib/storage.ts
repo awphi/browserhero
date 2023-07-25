@@ -18,7 +18,7 @@ fs.mkdirSync(basePath, { recursive: true });
 const driveApi = google.drive({
   auth: new google.auth.GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-    credentials: JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS),
+    credentials: JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS!),
   }),
   version: "v3",
 });
@@ -64,7 +64,7 @@ function getGoogleDriveFileId(url: string): string | undefined {
 async function fetchGoogleDriveFile(fileId: string): Promise<ArrayBuffer> {
   const res = await driveApi.files.get(
     {
-      fileId,
+      fileId: fileId,
       alt: "media",
     },
     { responseType: "arraybuffer" }
@@ -137,7 +137,4 @@ export async function saveSongArchiveToDisk(
   } else {
     throw `Archive source not implemented - "${link}"`;
   }
-
-  // TODO download the song archive via the gdrive API, zip it up (if needed) and store it at ${basePath}/${id}.[zip|7z|rar]
-  // then set the isProcessing flag to false :)
 }
