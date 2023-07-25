@@ -6,12 +6,12 @@ import {
   songMetadataKv,
 } from "$lib/storage";
 import { getMimeFromExt } from "$lib/util.js";
-import { error, json } from "@sveltejs/kit";
+import { error, json, type RequestEvent } from "@sveltejs/kit";
 
 // GET /api/get-song-archive/[id]
-export async function GET(event) {
+export async function GET(event: RequestEvent) {
   const { id } = event.params;
-  const song: ChorusAPISong | undefined = await songMetadataKv.get(id);
+  const song: ChorusAPISong | undefined = await songMetadataKv.get(id!);
 
   if (!song) {
     throw error(400, `Could not find song with specified ID.`);
@@ -22,7 +22,7 @@ export async function GET(event) {
   }
 
   try {
-    const maybeStream = getSongArchiveStream(id);
+    const maybeStream = getSongArchiveStream(id!);
     if (maybeStream) {
       const { stream, ext } = maybeStream;
       return new Response(stream, {

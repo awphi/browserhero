@@ -10,9 +10,7 @@ import JSZip from "jszip";
 import { archiveExtensions, getFileExt } from "./util";
 import { env } from "$env/dynamic/private";
 
-const basePath = import.meta.env.DEV
-  ? "/tmp/browserhero"
-  : "/browserhero-storage";
+const basePath = "/tmp/browserhero";
 const kvFilePath = path.resolve(basePath, "manifest.json");
 
 if (import.meta.env.DEV && !fs.existsSync(basePath)) {
