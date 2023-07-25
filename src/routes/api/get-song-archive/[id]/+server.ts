@@ -33,14 +33,14 @@ export async function GET(event) {
       });
     }
   } catch (e: any) {
-    throw error(500, e.message);
+    throw error(500, e);
   }
 
   try {
     await setSongIsProcessing(song.id, true);
     await saveSongArchiveToDisk(song.id, song.link);
   } catch (e: any) {
-    throw error(500, e.message);
+    throw error(500, e);
   } finally {
     await setSongIsProcessing(song.id, false);
   }
