@@ -8,14 +8,17 @@ import type { ChorusAPISong } from "./chorus";
 import { google } from "googleapis";
 import JSZip from "jszip";
 import { archiveExtensions, getFileExt } from "./util";
+import { GOOGLE_DRIVE_CREDENTIALS } from "$env/static/private";
 
 const basePath = "/tmp/browserhero";
 const kvFilePath = path.resolve(basePath, "manifest.json");
 
+fs.mkdirSync(basePath, { recursive: true });
+
 const driveApi = google.drive({
   auth: new google.auth.GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-    keyFile: "googlecloud_credentials.json",
+    credentials: JSON.parse(GOOGLE_DRIVE_CREDENTIALS),
   }),
   version: "v3",
 });
