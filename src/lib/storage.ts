@@ -27,6 +27,7 @@ const driveApi = google.drive({
 });
 
 // super simple on-disk KV storage - in the future we can migrate these to a cloud KV like vercel KV or redis
+// TODO migrate to use @vercel/kv
 export const songMetadataKv = new Keyv({
   store: new KeyvFile({
     filename: kvFilePath,
