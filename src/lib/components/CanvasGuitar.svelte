@@ -2,10 +2,31 @@
   import { Chart } from "chart2json";
   import { activeSong } from "../stores";
   import { Guitar } from "$lib/guitar/guitar";
+  import { getNoteX, noteRadius } from "$lib/guitar/guitar-utils";
+
   export let activeSongPoint: number;
+  export let guitarWidth = 500;
 
   let guitar: Guitar | undefined;
   let guitarContainer: HTMLDivElement;
+
+  let buttons = [
+    {
+      color: "#239B56",
+    },
+    {
+      color: "#E74C3C",
+    },
+    {
+      color: "#F4D03F",
+    },
+    {
+      color: "#3498DB",
+    },
+    {
+      color: "#DC7633",
+    },
+  ];
 
   $: {
     if (typeof $activeSong === "object" && guitarContainer) {
@@ -27,16 +48,45 @@
   }
 </script>
 
-<div class="guitar" bind:this={guitarContainer} />
+<div class="guitar" style={`width: ${guitarWidth}px;`}>
+  <div class="absolute h-full w-full" bind:this={guitarContainer} />
+
+  {#each { length: buttons.length } as _, i}
+    <div
+      class="string"
+      style={`
+      left: ${getNoteX(i, guitarWidth / buttons.length)}px;
+    `}
+    />
+  {/each}
+
+  {#each buttons as button, i}
+    <div
+      class="button"
+      style={`
+    left: ${getNoteX(i, guitarWidth / buttons.length)}px; 
+    width: ${noteRadius * 2}px;
+    background-color: ${button.color};
+  `}
+    />
+  {/each}
+</div>
 
 <style lang="postcss">
   .guitar {
-    height: 274vh;
-    width: 500px;
+    height: 100vh;
     position: absolute;
     bottom: 0;
     //transform: perspective(100vh) rotateX(30deg);
     transform-origin: center bottom;
     @apply bg-neutral outline outline-4 outline-base-200;
+  }
+
+  .button {
+    @apply -translate-x-1/2 aspect-square rounded-full absolute bottom-[20px] border-base-200 border-4;
+  }
+
+  .string {
+    @apply h-full absolute outline-2 outline outline-base-200;
   }
 </style>
