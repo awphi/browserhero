@@ -2,9 +2,9 @@
   import DUMMY_DATA from "../../assets/dummy-data";
   import SongCard from "./SongCard.svelte";
   import {
-    activeSongState,
     songSelectorSearchTerm,
     songSelectorSongs,
+    activeSong,
   } from "../../stores";
   import { onDestroy, onMount } from "svelte";
   import type { ChorusAPISong } from "../../chorus";
@@ -102,7 +102,7 @@
   >
     {#each loadedSongs as song}
       <SongCard
-        disabled={$activeSongState === "loading"}
+        disabled={$activeSong === "loading"}
         {song}
         class={isDummy ? "blur-sm" : ""}
       />

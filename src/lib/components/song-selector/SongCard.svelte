@@ -1,12 +1,12 @@
 <script lang="ts">
-  import { loadSongArchiveFromResponse } from "$lib/song-loader";
+  import { loadSongArchiveFromUrl } from "$lib/song-loader";
   import {
     formatInstrumentName,
     type ChorusAPISong,
     type Instrument,
     difficulties,
   } from "../../chorus";
-  import { setActiveSong } from "../../stores";
+  import { activeSong } from "../../stores";
   import { backOff } from "exponential-backoff";
 
   export let song: ChorusAPISong;
@@ -33,21 +33,24 @@
   }
 
   async function play(): Promise<void> {
+    activeSong.set("loading");
     try {
-      setActiveSong(async () => {
-        const res = await backOff(fetchSongArchive, {
-          retry: (e, n) => {
-            // TODO toasts for the status of this + disable loading other songs
-            console.log(e, n);
-            return true;
-          },
-          delayFirstAttempt: false,
-        });
-        return loadSongArchiveFromResponse(res);
+      const res = await backOff(fetchSongArchive, {
+        retry: (e, n) => {
+          // TODO toasts for the status of this + disable loading other songs
+          //console.log(e, n);
+          return true;
+        },
+        delayFirstAttempt: false,
+        numOfAttempts: 1,
       });
+      const url = await res.text();
+      const song = await loadSongArchiveFromUrl(url);
+      activeSong.set(song);
     } catch (e) {
+      activeSong.set(undefined);
       // TODO error message for failing
-      console.error(e);
+      console.log(e);
     }
   }
 

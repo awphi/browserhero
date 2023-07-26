@@ -158,7 +158,8 @@ async function processRawBundle(rawBundle: RawSongBundle): Promise<SongBundle> {
 }
 
 export async function loadSongArchiveFromUrl(url: string): Promise<SongBundle> {
-  return loadSongArchiveFromResponse(await fetch(url));
+  const res = await fetch(url);
+  return loadSongArchiveFromResponse(res);
 }
 
 export async function loadSongArchiveFromResponse(

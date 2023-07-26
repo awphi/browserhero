@@ -3,7 +3,7 @@
   import PausePlay from "$lib/components/PausePlay.svelte";
   import Guitar from "$lib/components/Guitar.svelte";
   import { onMount } from "svelte";
-  import { activeSong, setActiveSong } from "$lib/stores";
+  import { activeSong } from "$lib/stores";
   import SongMetaDisplay from "$lib/components/SongMetaDisplay.svelte";
   import { loadSongArchiveFromUrl } from "$lib/song-loader";
 
@@ -16,8 +16,14 @@
   });
 
   onMount(async () => {
-    const testUrl = new URL("/test-archive.zip", import.meta.url).toString();
-    setActiveSong(() => loadSongArchiveFromUrl(testUrl));
+    activeSong.set("loading");
+    const testUrl = new URL("/ghost-town.zip", import.meta.url).toString();
+    try {
+      const song = await loadSongArchiveFromUrl(testUrl);
+      activeSong.set(song);
+    } catch (e) {
+      activeSong.set(undefined);
+    }
   });
 </script>
 
@@ -35,7 +41,7 @@
   <div class="flex w-full h-full items-center justify-center">
     <Guitar {activeSongPoint} />
   </div>
-  {#if $activeSong}
+  {#if typeof $activeSong === "object"}
     <SongMetaDisplay
       song={$activeSong}
       bind:activeSongPoint
