@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Chart } from "chart2json";
-  import { activeSong } from "../stores";
+  import { activeSong } from "../src/lib/stores";
 
   // constants the define the look/feel of the guitar
   export let guitarWidth = 700;
