@@ -1,7 +1,7 @@
 <script lang="ts">
   import { activeSong } from "../stores";
 
-  // constants the define the look of the guitar
+  // constants the define the look/feel of the guitar
   export let guitarWidth = 700;
   export let buttonCount = 5;
   export let buttonMargin = 20;
@@ -28,7 +28,7 @@
     Math.ceil(guitarHeight / (resolution * 4)) * resolution * 4;
 
   // set the resolution + currentSyncKeys when the active song changes
-  $: if ($activeSong) {
+  $: if (typeof $activeSong === "object") {
     resolution = $activeSong.chart.song.resolution;
     currentSyncKeys = Object.keys($activeSong.chart.syncTrack);
   }
@@ -68,19 +68,19 @@
   ): number {
     // 110 is the 50px offset of the notebar + the note button radius (60px)
     const guitarHeightFromNotebar = guitarHeight - 110;
-    const totalOffset = point + guitarHeightFromNotebar;
+    const totalOffset = point * 2 + guitarHeightFromNotebar;
     return (idx * resolution + totalOffset) % guitarHeightRounded;
   }
 
   // reset the sync keys if the song is restarted & guitar point
-  $: if (activeSongPoint === 0 && $activeSong) {
+  $: if (activeSongPoint === 0 && typeof $activeSong === "object") {
     currentSyncKeys = Object.keys($activeSong.chart.syncTrack);
     point = 0;
     lastUpdate = 0;
   }
 
   // update the current point
-  $: if ($activeSong) {
+  $: if (typeof $activeSong === "object") {
     if (currentSyncKeys.length > 0) {
       const nextSync = currentSyncKeys[0];
       const tick = Number.parseInt(nextSync);

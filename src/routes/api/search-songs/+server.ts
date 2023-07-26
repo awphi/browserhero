@@ -1,6 +1,6 @@
 import { ensureSongs } from "$lib/chorus";
+import { kv } from "$lib/server-utils";
 import { json } from "@sveltejs/kit";
-import { kv } from "@vercel/kv";
 import isFinite from "lodash/isFinite";
 
 // GET /api/searchs-songs?query=""&from=0
@@ -25,7 +25,7 @@ export async function GET(event) {
   const validatedSongs = ensureSongs(songs);
 
   await Promise.all(
-    validatedSongs.map((song) => kv.set(song.id.toString(), song))
+    validatedSongs.map((song) => kv.set(song.id.toString(), song, { nx: true }))
   );
 
   return json({ songs: validatedSongs, originalLength: songs.length });

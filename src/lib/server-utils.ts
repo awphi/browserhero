@@ -1,19 +1,38 @@
-import { kv } from "@vercel/kv";
+import { createClient } from "@vercel/kv";
 import type { ChorusAPISong } from "./chorus";
 import { google } from "googleapis";
 import JSZip from "jszip";
 import { env } from "$env/dynamic/private";
+import { getExtFromMime } from "./util";
 
 if (!env.GOOGLE_CREDENTIALS) {
   throw new Error("Missing GOOGLE_CREDENTIALS!");
 }
 
+import { KV_REST_API_TOKEN, KV_REST_API_URL } from "$env/static/private";
+import { Readable } from "stream";
+
+export const kv = createClient({
+  url: KV_REST_API_URL,
+  token: KV_REST_API_TOKEN,
+});
+
+const googleAuth = new google.auth.GoogleAuth({
+  scopes: [
+    "https://www.googleapis.com/auth/drive.readonly",
+    "https://www.googleapis.com/auth/devstorage.read_write",
+  ],
+  credentials: JSON.parse(env.GOOGLE_CREDENTIALS),
+});
+
 const driveApi = google.drive({
-  auth: new google.auth.GoogleAuth({
-    scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-    credentials: JSON.parse(env.GOOGLE_CREDENTIALS),
-  }),
+  auth: googleAuth,
   version: "v3",
+});
+
+const storageApi = google.storage({
+  auth: googleAuth,
+  version: "v1",
 });
 
 function getGoogleDriveFileId(url: string): string | undefined {
@@ -96,10 +115,10 @@ async function fetchSongArchive(
       throw new Error(`Missing mime type on song ${fileId}`);
     } else if (meta.mimeType === "application/vnd.google-apps.folder") {
       zipBuf = await fetchAndZipGoogleDriveFolder(fileId);
+      mime = "application/x-zip-compressed";
     } else {
       console.log(`Saving archive from gdrive file - "${fileId}"`);
       zipBuf = await fetchGoogleDriveFile(fileId);
-      mime = "application/x-zip-compressed";
     }
     return {
       buffer: zipBuf,
@@ -112,6 +131,25 @@ async function fetchSongArchive(
 
 export async function saveSongArchive(song: ChorusAPISong): Promise<string> {
   const { buffer, mimeType } = await fetchSongArchive(song.link);
-  // TODO upload buffer to S3, get resultant URL and attach to the song in KV then return the url
-  return Promise.resolve("todo");
+
+  const result = await storageApi.objects.insert({
+    bucket: "browserhero-song-bucket",
+    name: `${song.id}.${getExtFromMime(mimeType)}`,
+    media: {
+      mimeType,
+      body: Readable.from(Buffer.from(buffer)),
+    },
+  });
+  console.log(
+    `Inserted new song into storage - ${song.id} @ ${result.data.id}`
+  );
+  if (result.data.mediaLink) {
+    const songId = song.id.toString();
+    const songFromKv = await kv.get<ChorusAPISong>(songId);
+    songFromKv!.archiveUrl = result.data.mediaLink;
+    await kv.set(songId, songFromKv!);
+    return result.data.mediaLink;
+  } else {
+    throw `Missing media link on result from GCP - ${JSON.stringify(result)}`;
+  }
 }

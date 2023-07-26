@@ -1,11 +1,11 @@
 import type { ChorusAPISong } from "$lib/chorus";
 import {
   getSongArchiveUrl,
+  kv,
   saveSongArchive,
   setSongIsProcessing,
 } from "$lib/server-utils";
-import { error, json, type RequestEvent } from "@sveltejs/kit";
-import { kv } from "@vercel/kv";
+import { error, json, text, type RequestEvent } from "@sveltejs/kit";
 
 // GET /api/get-song-archive/[id]
 export async function GET(event: RequestEvent) {
@@ -20,9 +20,9 @@ export async function GET(event: RequestEvent) {
     return json("Archive is being processed.", { status: 202 });
   }
 
-  const url = getSongArchiveUrl(song.id);
+  const url = await getSongArchiveUrl(song.id);
   if (url) {
-    return json(url, { status: 200 });
+    return text(url, { status: 200 });
   }
 
   let newSongUrl: string | null = null;
@@ -36,8 +36,8 @@ export async function GET(event: RequestEvent) {
     await setSongIsProcessing(song.id, false);
   }
 
-  if (newSongUrl && !error) {
-    return json(newSongUrl, { status: 200 });
+  if (newSongUrl && !newSongError) {
+    return text(newSongUrl, { status: 200 });
   } else {
     throw error(500, newSongError);
   }
