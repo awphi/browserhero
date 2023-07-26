@@ -1,11 +1,11 @@
 <script lang="ts">
   import Menu from "$lib/components/Menu.svelte";
   import PausePlay from "$lib/components/PausePlay.svelte";
-  import Guitar from "$lib/components/Guitar.svelte";
   import { onMount } from "svelte";
   import { activeSong } from "$lib/stores";
   import SongMetaDisplay from "$lib/components/SongMetaDisplay.svelte";
   import { loadSongArchiveFromUrl } from "$lib/song-loader";
+  import CanvasGuitar from "$lib/components/CanvasGuitar.svelte";
 
   let activeSongPoint = 0;
   let paused = true;
@@ -39,7 +39,7 @@
   />
   <Menu class="absolute left-0 top-2 z-10" />
   <div class="flex w-full h-full items-center justify-center">
-    <Guitar {activeSongPoint} />
+    <CanvasGuitar {activeSongPoint} />
   </div>
   {#if typeof $activeSong === "object"}
     <SongMetaDisplay
