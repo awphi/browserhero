@@ -18,10 +18,14 @@ if (import.meta.env.DEV && !fs.existsSync(basePath)) {
   fs.mkdirSync(basePath, { recursive: true });
 }
 
+if (!env.GOOGLE_CREDENTIALS) {
+  throw new Error("Missing GOOGLE_CREDENTIALS!");
+}
+
 const driveApi = google.drive({
   auth: new google.auth.GoogleAuth({
     scopes: ["https://www.googleapis.com/auth/drive.readonly"],
-    credentials: JSON.parse(env.GOOGLE_DRIVE_CREDENTIALS!),
+    credentials: JSON.parse(env.GOOGLE_CREDENTIALS),
   }),
   version: "v3",
 });
