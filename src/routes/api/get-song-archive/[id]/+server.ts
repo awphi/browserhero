@@ -1,17 +1,16 @@
 import type { ChorusAPISong } from "$lib/chorus";
 import {
-  getSongArchiveStream,
-  saveSongArchiveToDisk,
+  getSongArchiveUrl,
+  saveSongArchive,
   setSongIsProcessing,
-  songMetadataKv,
-} from "$lib/storage";
-import { getMimeFromExt } from "$lib/util.js";
+} from "$lib/server-utils";
 import { error, json, type RequestEvent } from "@sveltejs/kit";
+import { kv } from "@vercel/kv";
 
 // GET /api/get-song-archive/[id]
 export async function GET(event: RequestEvent) {
   const { id } = event.params;
-  const song: ChorusAPISong | undefined = await songMetadataKv.get(id!);
+  const song = await kv.get<ChorusAPISong>(id!);
 
   if (!song) {
     throw error(400, `Could not find song with specified ID.`);
@@ -21,29 +20,25 @@ export async function GET(event: RequestEvent) {
     return json("Archive is being processed.", { status: 202 });
   }
 
-  try {
-    const maybeStream = getSongArchiveStream(id!);
-    if (maybeStream) {
-      const { stream, ext } = maybeStream;
-      return new Response(stream, {
-        headers: {
-          "Content-Type": getMimeFromExt(ext)!,
-        },
-        status: 200,
-      });
-    }
-  } catch (e: any) {
-    throw error(500, e);
+  const url = getSongArchiveUrl(song.id);
+  if (url) {
+    return json(url, { status: 200 });
   }
 
+  let newSongUrl: string | null = null;
+  let newSongError: any = null;
   try {
     await setSongIsProcessing(song.id, true);
-    await saveSongArchiveToDisk(song.id, song.link);
+    newSongUrl = await saveSongArchive(song);
   } catch (e: any) {
-    throw error(500, e);
+    newSongError = e;
   } finally {
     await setSongIsProcessing(song.id, false);
   }
 
-  return json("Archive is being processed.", { status: 202 });
+  if (newSongUrl && !error) {
+    return json(newSongUrl, { status: 200 });
+  } else {
+    throw error(500, newSongError);
+  }
 }

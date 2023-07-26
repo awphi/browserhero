@@ -17,16 +17,6 @@ export type Instrument = (typeof instruments)[number];
 
 export type Difficulty = (typeof difficulties)[number];
 
-export interface ChorusAPISearchQuery {
-  query: string;
-  from?: number;
-}
-
-export interface ChorusAPISearchResult {
-  songs: ChorusAPISong[];
-  originalLength: number;
-}
-
 export interface ChorusAPISong {
   id: number;
   name: string;
@@ -62,14 +52,7 @@ export interface ChorusAPISong {
     };
   };
   isProcessing: boolean;
-}
-
-export function encodeDirectLinkKey(s: string): string {
-  return encodeURIComponent(s).replace(".", "%2E");
-}
-
-export function decodeDirectLinkKey(s: string): string {
-  return decodeURIComponent(s);
+  archiveUrl?: string;
 }
 
 // we just call it any since we're gonna do a bunch of mutation on it
@@ -111,7 +94,7 @@ export function ensureSong(song: unknown): ChorusAPISong | null {
     }
   }
 
-  // we add the isProcessing key but omit the storedObjectUrls as undefined implies we don't have them yet
+  // we add the isProcessing key but omit the archiveUrl as undefined implies we don't have them yet
   songObjectMut.isProcessing = false;
 
   return songObjectMut as ChorusAPISong;
