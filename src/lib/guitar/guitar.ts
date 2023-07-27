@@ -1,4 +1,5 @@
 import type { Chart } from "chart2json";
+import { timeBpms } from "./guitar-utils";
 
 type NoteTrack =
   | Chart.InstrumentTracks[keyof Chart.InstrumentTracks]
@@ -29,6 +30,12 @@ export class Guitar {
     if (difficulty && track) {
       this._track = chart.difficulties[difficulty]?.[track];
     }
+
+    console.log(timeBpms(chart.syncTrack, chart.song.resolution));
+
+    /*     Object.keys(this._track!).forEach((tick) => {
+      console.log(tick);
+    }); */
   }
 
   private setSize(

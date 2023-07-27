@@ -17,7 +17,7 @@
 
   onMount(async () => {
     activeSong.set("loading");
-    const testUrl = new URL("/ghost-town.zip", import.meta.url).toString();
+    const testUrl = new URL("/mr-brightside.7z", import.meta.url).toString();
     try {
       const song = await loadSongArchiveFromUrl(testUrl);
       activeSong.set(song);
@@ -48,8 +48,13 @@
       class="absolute top-2 right-2"
     />
     <div class="hidden">
-      {#each Object.values($activeSong.audio) as audioUrl}
-        <audio src={audioUrl} bind:paused bind:currentTime={activeSongPoint} />
+      <audio
+        src={Object.values($activeSong.audio)[0]}
+        bind:paused
+        bind:currentTime={activeSongPoint}
+      />
+      {#each Object.values($activeSong.audio).slice(1) as audioUrl}
+        <audio src={audioUrl} bind:paused />
       {/each}
     </div>
   {/if}

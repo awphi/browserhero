@@ -29,6 +29,8 @@
   ];
 
   $: {
+    console.log(guitarContainer, $activeSong);
+
     if (typeof $activeSong === "object" && guitarContainer) {
       guitar = new Guitar(
         guitarContainer,
