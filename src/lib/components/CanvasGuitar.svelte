@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Chart } from "chart2json";
   import { activeSong } from "../stores";
   import { Guitar } from "$lib/guitar/guitar";
   import {
@@ -34,12 +33,7 @@
 
   $: {
     if (typeof $activeSong === "object" && guitarContainer) {
-      guitar = new Guitar(
-        guitarContainer,
-        $activeSong.chart,
-        Chart.Difficulty.EXPERT,
-        Chart.Instrument.SINGLE
-      );
+      guitar = new Guitar(guitarContainer, $activeSong.chart);
     } else {
       if (guitar) {
         guitar.destroy();

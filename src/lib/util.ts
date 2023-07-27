@@ -6,6 +6,7 @@ const mimeTypeToExtensions: Record<string, string> = {
   "application/vnd.rar": "rar",
   "application/x-zip-compressed": "zip",
   "application/x-7z-compressed": "7z",
+  "application/zip": "zip",
 };
 const extensionsToMimeTypes = invert(mimeTypeToExtensions);
 

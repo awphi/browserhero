@@ -1,8 +1,8 @@
-import Parser, { type Chart } from "chart2json";
 import { mid2Chart } from "./mid2chart";
 import ini from "ini";
 import { unarchive } from "./unarchive";
 import { getFileExt } from "./util";
+import { parseChart, type ParsedChart } from "./chart-parser";
 
 const imageExtensions = ["png", "jpg", "jpeg"];
 const audioExtensions = ["ogg", "mp3", "opus"];
@@ -10,7 +10,7 @@ const audioExtensions = ["ogg", "mp3", "opus"];
 export type RawSongBundle = Record<string, ArrayBufferLike>;
 
 export interface SongBundle {
-  chart: Chart.Chart;
+  chart: ParsedChart;
   /** original filenames -> blob URLs */
   audio: Record<string, string>;
   /** original filenames -> blob URLs */
@@ -139,18 +139,15 @@ async function processRawBundle(rawBundle: RawSongBundle): Promise<SongBundle> {
 
   if (Object.keys(audio).length > 0) {
     const rawChartData = getChartData(rawBundle);
-    const chartData = preparse(rawChartData);
-    const parsedChartData = Parser.parse(chartData);
-    if (parsedChartData.ok === false) {
-      throw new Error(parsedChartData.reason.reason);
-    }
-
+    //const chartData = preparse(rawChartData);
+    const parsedChartData = parseChart(rawChartData);
+    console.log("Parsed chart:", parsedChartData);
     const meta = await getMetadata(rawBundle);
 
     return {
       ...meta,
       audio,
-      chart: parsedChartData.value,
+      chart: parsedChartData,
     };
   } else {
     throw new Error("Could not find .ogg(s)!");
