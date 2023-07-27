@@ -2,7 +2,11 @@
   import { Chart } from "chart2json";
   import { activeSong } from "../stores";
   import { Guitar } from "$lib/guitar/guitar";
-  import { getNoteX, noteRadius } from "$lib/guitar/guitar-utils";
+  import {
+    buttonOffset,
+    buttonRadius,
+    getNoteX,
+  } from "$lib/guitar/guitar-utils";
 
   export let activeSongPoint: number;
   export let guitarWidth = 500;
@@ -29,8 +33,6 @@
   ];
 
   $: {
-    console.log(guitarContainer, $activeSong);
-
     if (typeof $activeSong === "object" && guitarContainer) {
       guitar = new Guitar(
         guitarContainer,
@@ -46,13 +48,11 @@
     }
   }
   $: if (guitar) {
-    guitar.updateTime(activeSongPoint);
+    guitar.update(activeSongPoint);
   }
 </script>
 
 <div class="guitar" style={`width: ${guitarWidth}px;`}>
-  <div class="absolute h-full w-full" bind:this={guitarContainer} />
-
   {#each { length: buttons.length } as _, i}
     <div
       class="string"
@@ -62,13 +62,20 @@
     />
   {/each}
 
+  <div
+    style={`height: calc(100% - ${buttonRadius}px - ${buttonOffset}px);`}
+    class="absolute w-full"
+    bind:this={guitarContainer}
+  />
+
   {#each buttons as button, i}
     <div
       class="button"
       style={`
     left: ${getNoteX(i, guitarWidth / buttons.length)}px; 
-    width: ${noteRadius * 2}px;
+    width: ${buttonRadius * 2}px;
     background-color: ${button.color};
+    bottom: ${buttonOffset}px;
   `}
     />
   {/each}
@@ -85,7 +92,7 @@
   }
 
   .button {
-    @apply -translate-x-1/2 aspect-square rounded-full absolute bottom-[20px] border-base-200 border-4;
+    @apply -translate-x-1/2 aspect-square rounded-full absolute border-base-200 border-4;
   }
 
   .string {

@@ -1,14 +1,19 @@
 import { Chart } from "chart2json";
 
-export const noteRadius = 40;
 const SECONDS_PER_MINUTE = 60;
 
-// helpful interface to merge with chart2json interfaces once we've assigned a time to them
-export interface TimedTickEvent {
+export const buttonRadius = 40;
+export const buttonOffset = 20;
+
+export interface TickEvent {
   tick: number;
+}
+
+export interface TimedTickEvent extends TickEvent {
   assignedTime: number;
 }
 
+export type TimedTS = TimedTickEvent & Chart.TimeSignature;
 export type TimedBpm = TimedTickEvent & Chart.Bpm;
 
 export function getNoteX(index: number, stringOffset: number): number {
@@ -25,6 +30,17 @@ export function disToTime(
   return (((tickEnd - tickStart) / resolution) * SECONDS_PER_MINUTE) / bpm;
 }
 
+export function timeToDis(
+  timeStart: number,
+  timeEnd: number,
+  resolution: number,
+  bpm: number
+) {
+  return Math.round(
+    (((timeEnd - timeStart) * bpm) / SECONDS_PER_MINUTE) * resolution
+  );
+}
+
 export function findClosestPosition(
   position: number,
   ticks: TimedTickEvent[]
@@ -36,7 +52,7 @@ export function findClosestPosition(
   let midPoint = -1;
 
   while (lowerBound <= upperBound) {
-    midPoint = (lowerBound + upperBound) / 2;
+    midPoint = Math.floor((lowerBound + upperBound) / 2);
     index = midPoint;
 
     if (ticks[midPoint].tick == position) {
@@ -74,34 +90,56 @@ export function timeBpms(
   syncTrack: Chart.SyncTrackSection,
   resolution: number
 ): TimedBpm[] {
-  const entries: [string, Chart.Tick<Chart.SyncTrackEvent>][] =
-    Object.entries(syncTrack);
+  const events = getSyncEventsArray(syncTrack).filter(
+    (a) => a.kind === Chart.SyncTrackEventType.BPM
+  ) as (TickEvent & Chart.Bpm)[];
   const result: TimedBpm[] = [];
   let time = 0;
-  let prevBpm: number = -1;
-  let prevBpmTick: number = 0;
-  for (const [tickStr, events] of entries) {
-    const tick = Number.parseInt(tickStr);
-    for (const ev of events) {
-      if (ev.kind === Chart.SyncTrackEventType.BPM) {
-        // used to set the initial bpm
-        if (prevBpm === -1) {
-          prevBpm = ev.bpm;
-          prevBpmTick = tick;
-        }
-        time += disToTime(prevBpmTick, tick, resolution, prevBpm);
-        result.push({
-          ...ev,
-          assignedTime: time,
-          tick,
-        });
-        prevBpm = ev.bpm;
-        prevBpmTick = tick;
-        // break after the first bpm in a tick - we don't support multiple bpm updates in a single tick
-        break;
-      }
+  let prevBpm = events[0];
+  for (const ev of events) {
+    if (ev.kind === Chart.SyncTrackEventType.BPM) {
+      time += disToTime(prevBpm.tick, ev.tick, resolution, prevBpm.bpm);
+      result.push({
+        ...ev,
+        assignedTime: time,
+      });
+      prevBpm = ev;
     }
   }
 
   return result;
+}
+
+export function getSyncEventsArray(
+  syncTrack: Chart.SyncTrackSection
+): (TickEvent & Chart.SyncTrackEvent)[] {
+  const entries: [string, Chart.Tick<Chart.SyncTrackEvent>][] =
+    Object.entries(syncTrack);
+  return entries
+    .map(([tickStr, evs]) => {
+      const tick = Number.parseInt(tickStr);
+      return evs.map((ev) => ({ ...ev, tick }));
+    })
+    .filter((a) => a !== undefined)
+    .flat();
+}
+
+export function timeToTick(time: number, resolution: number, bpms: TimedBpm[]) {
+  if (time < 0) time = 0;
+
+  let position = 0;
+
+  let prevBPM = bpms[0];
+
+  // Search for the last bpm
+  for (let i = 0; i < bpms.length; ++i) {
+    const bpmInfo = bpms[i];
+    if (bpmInfo.assignedTime >= time) break;
+    else prevBPM = bpmInfo;
+  }
+
+  position = prevBPM.tick;
+  position += timeToDis(prevBPM.assignedTime, time, resolution, prevBPM.bpm);
+
+  return position;
 }
