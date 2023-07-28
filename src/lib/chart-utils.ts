@@ -1,14 +1,12 @@
 import type { Bpm, TickEvent, Timed } from "./chart-parser";
 
-const SECONDS_PER_MINUTE = 60;
-
 export function disToTime(
   tickStart: number,
   tickEnd: number,
   resolution: number,
   bpm: number
 ) {
-  return (((tickEnd - tickStart) / resolution) * SECONDS_PER_MINUTE) / bpm;
+  return (((tickEnd - tickStart) / resolution) * 60) / bpm;
 }
 
 export function getTimedBpms(bpms: Bpm[], resolution: number): Timed<Bpm>[] {
@@ -33,9 +31,7 @@ export function timeToDis(
   resolution: number,
   bpm: number
 ) {
-  return Math.round(
-    (((timeEnd - timeStart) * bpm) / SECONDS_PER_MINUTE) * resolution
-  );
+  return Math.round((((timeEnd - timeStart) * bpm) / 60) * resolution);
 }
 
 export function findClosestPosition(tick: number, events: TickEvent[]): number {
@@ -89,4 +85,36 @@ export function getTimedTrack<T extends TickEvent>(
     ...a,
     assignedTime: tickToTime(a.tick, resolution, bpms),
   }));
+}
+
+export function getLastEvent<T>(
+  time: number,
+  events: Timed<T>[],
+  equal: boolean = true
+): Timed<T> {
+  let last = events[0];
+  // Search for the last bpm
+  for (let i = 0; i < events.length; ++i) {
+    const ev = events[i];
+    if ((equal && ev.assignedTime >= time) || ev.assignedTime > time) break;
+    else last = ev;
+  }
+
+  return last;
+}
+
+export function timeToTick(
+  time: number,
+  resolution: number,
+  bpms: Timed<Bpm>[]
+) {
+  if (time < 0) time = 0;
+
+  const prevBPM = getLastEvent(time, bpms);
+
+  let position = 0;
+  position = prevBPM.tick;
+  position += timeToDis(prevBPM.assignedTime, time, resolution, prevBPM.bpm);
+
+  return position;
 }

@@ -1,4 +1,9 @@
-import type { ParsedChart } from "$lib/chart-parser";
+import type { Bpm, ParsedChart, TimeSignature, Timed } from "$lib/chart-parser";
+import {
+  findClosestPosition,
+  getLastEvent,
+  tickToTime,
+} from "$lib/chart-utils";
 
 export class Guitar {
   private readonly _speed: number = 340;
@@ -35,7 +40,6 @@ export class Guitar {
     canvas.width = Math.round(dpr * newWidth);
     canvas.height = Math.round(dpr * newHeight);
     context.scale(dpr, dpr);
-    this.update(this._time);
   }
 
   update(seconds: number) {
@@ -61,6 +65,7 @@ export class Guitar {
     _ctx.textBaseline = "top";
     _ctx.fillText(`${_time}`, 10, 10);
 
+    this.drawFrets();
     this.drawSyncEvents();
   }
 
@@ -79,19 +84,54 @@ export class Guitar {
       const y = this.timeToY(ev.assignedTime);
       _ctx.beginPath();
       if ("bpm" in ev) {
-        _ctx.strokeStyle = "red";
         _ctx.textAlign = "left";
-        _ctx.moveTo(0, y);
-        _ctx.lineTo(w / 2, y);
-        _ctx.stroke();
         _ctx.fillText(`${ev.bpm}bpm`, 5, y);
       } else {
-        _ctx.strokeStyle = "orange";
         _ctx.textAlign = "right";
-        _ctx.moveTo(w / 2, y);
-        _ctx.lineTo(w, y);
-        _ctx.stroke();
         _ctx.fillText(`${ev.numerator} / ${ev.denominator}`, w - 5, y);
+      }
+    }
+  }
+
+  private drawFrets() {
+    const { _ctx, _canvas, _chart } = this;
+    const w = _canvas.width;
+    const endTime = this.yToTime(0) + 0.1;
+    const bpms = _chart.SyncTrack.bpms;
+
+    _ctx.lineWidth = 5;
+    _ctx.strokeStyle = "#191E24";
+
+    for (let i = 0; i < bpms.length; i++) {
+      const bpm = bpms[i];
+      const nextBpm: Timed<Bpm> | undefined = bpms[i + 1];
+      const ts = getLastEvent(
+        bpm.assignedTime,
+        this._chart.SyncTrack.timeSignatures,
+        false
+      );
+      // we might need this for coloring properly
+      const beatsPerBar = ts.numerator / ts.denominator / 0.25;
+      const step = 60 / (ts.denominator / 2) / bpm.bpm;
+
+      let time = bpm.assignedTime;
+      let beat = 0;
+      // TODO not sure if this is the right way to draw frets but will suffice for now
+      while (time < endTime && (!nextBpm || time < nextBpm.assignedTime)) {
+        if (beat % 2 === 0) {
+          _ctx.strokeStyle = "rgba(25,30,36, 0.6)";
+        } else {
+          _ctx.strokeStyle = "rgba(25,30,36, 0.3)";
+        }
+        if (time > this._time) {
+          const y = this.timeToY(time);
+          _ctx.beginPath();
+          _ctx.moveTo(0, y);
+          _ctx.lineTo(w, y);
+          _ctx.stroke();
+        }
+        time += step;
+        beat++;
       }
     }
   }

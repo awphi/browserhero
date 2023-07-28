@@ -193,7 +193,10 @@ export function mid2Chart(
         const bpm = Math.floor((6.0e7 / mpq) * 1000.0);
         Sync += "\t" + tick + " = B " + bpm + "\n";
       } else if (event.type == "timeSignature") {
-        Sync += `\t${tick} = TS ${event.numerator} ${event.denominator}\n`;
+        // take the sqrt of the denominator since chart formats store the denominator as an exponent of 2
+        Sync += `\t${tick} = TS ${event.numerator} ${Math.sqrt(
+          event.denominator
+        )}\n`;
       } else if (event.type == "marker" && !hasEvents) {
         writeEventLine(4, tick, "section " + event.text);
       }
