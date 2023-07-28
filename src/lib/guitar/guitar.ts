@@ -69,7 +69,7 @@ export class Guitar {
     const w = this._canvas.width;
     const endTime = this.yToTime(0) + 0.1;
     _ctx.textBaseline = "middle";
-    for (const ev of _chart.syncTrack.allEvents) {
+    for (const ev of _chart.SyncTrack.allEvents) {
       if (ev.assignedTime < _time) {
         continue;
       } else if (ev.assignedTime > endTime) {
@@ -84,15 +84,14 @@ export class Guitar {
         _ctx.moveTo(0, y);
         _ctx.lineTo(w / 2, y);
         _ctx.stroke();
-        _ctx.fillText(`${ev.bpm}bpm`, 0, y);
+        _ctx.fillText(`${ev.bpm}bpm`, 5, y);
       } else {
         _ctx.strokeStyle = "orange";
         _ctx.textAlign = "right";
         _ctx.moveTo(w / 2, y);
         _ctx.lineTo(w, y);
         _ctx.stroke();
-        const text = `${ev.numerator} / ${ev.denominator}`;
-        _ctx.fillText(`${text}bpm`, 0, y);
+        _ctx.fillText(`${ev.numerator} / ${ev.denominator}`, w - 5, y);
       }
     }
   }
