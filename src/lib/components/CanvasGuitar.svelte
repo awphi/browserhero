@@ -47,14 +47,14 @@
 </script>
 
 <div class="guitar" style={`width: ${guitarWidth}px;`}>
-  {#each { length: buttons.length } as _, i}
+  <!--   {#each { length: buttons.length } as _, i}
     <div
       class="string"
       style={`
       left: ${getNoteX(i, guitarWidth / buttons.length)}px;
     `}
     />
-  {/each}
+  {/each} -->
 
   <div
     style={`height: calc(100% - ${buttonRadius}px - ${buttonOffset}px);`}
