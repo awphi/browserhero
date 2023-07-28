@@ -6,6 +6,10 @@ export interface TickEvent {
   tick: number;
 }
 
+export interface SimpleEvent extends TickEvent {
+  value: string;
+}
+
 export interface Bpm extends TickEvent {
   bpm: number;
 }
@@ -39,18 +43,27 @@ export interface SongSection {
   previewend?: number;
 }
 
-type SyncTrackEvent = Bpm | TimeSignature;
+export interface ParsedChart {
+  Song: SongSection;
+  SyncTrack: TimedTracks<SyncTrackInternal>;
+  Events?: Timed<SimpleEvent>[];
+}
 
-export interface SyncTrack {
+// Internal types used to build the ParsedChart
+interface SyncTrackInternal {
   bpms: Bpm[];
   timeSignatures: TimeSignature[];
   allEvents: SyncTrackEvent[];
 }
-
-export interface ParsedChart {
-  song: SongSection;
-  syncTrack: TimedTracks<SyncTrack>;
-}
+type SyncTrackEvent = Bpm | TimeSignature;
+type OtherChartSection = NonNullable<
+  ParsedChart[keyof Omit<ParsedChart, "Song" | "SyncTrack">]
+>;
+type SectionParser = (
+  lines: string[],
+  resolution: number,
+  bpms: ParsedChart["SyncTrack"]["bpms"]
+) => OtherChartSection;
 
 const requiredSections = ["Song", "SyncTrack"];
 const sectionTitleRegex = /^\[(.*)\]$/;
@@ -68,7 +81,7 @@ const numericalSongSections = [
 function parseCommonLine(line: string): [string, string] | null {
   const res = line.match(commonLineRegex);
   if (res === null || res.length !== 3) {
-    console.error(`Failed to parse common line: '${line}'.`);
+    console.warn(`Failed to parse common line: '${line}'.`);
     return null;
   }
 
@@ -82,7 +95,7 @@ function parseTickEventLine(line: string): [number, string] | null {
   }
   const tick = Number.parseInt(commonLine[0]);
   if (!isInteger(tick)) {
-    console.error(`Invalid tick event line '${line}'.`);
+    console.warn(`Invalid tick event line '${line}'.`);
     return null;
   }
   return [tick, commonLine[1]];
@@ -99,16 +112,13 @@ function parseSongSection(lines: string[]): SongSection {
   const result = Object.create(null);
   const parsedLines = parseCommonLines(lines);
   for (const [key, value] of parsedLines) {
-    let valueFinal: string | number = value;
+    let valueFinal: string | number = value.replace(quotedStringRegex, "");
     const keyFinal = key.toLowerCase();
-    if (quotedStringRegex.test(valueFinal)) {
-      valueFinal = valueFinal.replace(quotedStringRegex, "");
-    }
 
     if (numericalSongSections.includes(keyFinal)) {
       valueFinal = Number.parseFloat(valueFinal);
       if (!isFinite(valueFinal)) {
-        console.error(
+        console.warn(
           `Failed to parse numerical song section property '${key} = ${value}'.`
         );
         continue;
@@ -136,7 +146,7 @@ function parseSyncTrackEvent([tick, frag]: [
   if (result[1] === "B") {
     const bpmRaw = Number.parseInt(result[2]);
     if (!isFinite(bpmRaw)) {
-      console.error(`Invalid BPM '${frag}'.`);
+      console.warn(`Invalid BPM '${frag}'.`);
       return null;
     }
 
@@ -147,27 +157,27 @@ function parseSyncTrackEvent([tick, frag]: [
   } else if (result[1] === "TS") {
     const ts = result[2].trim().split(/\s+/);
     if (ts.length > 2) {
-      console.error(`Invalid TS '${frag}'.`);
+      console.warn(`Invalid TS '${frag}'.`);
       return null;
     }
-    const numer = Number.parseInt(ts[1]);
-    const denom = ts[2] ? Number.parseInt(ts[2]) : 2;
-    if (!isFinite(denom) || !isFinite(denom)) {
-      console.error(`Invalid TS '${frag}'.`);
+    const numer = Number.parseInt(ts[0]);
+    const denom = ts[1] ? Number.parseInt(ts[1]) : 2;
+    if (!isFinite(numer) || !isFinite(denom)) {
+      console.warn(`Invalid TS '${frag}'.`);
       return null;
     }
     return {
       numerator: numer,
-      denominator: Math.pow(denom, 2),
+      denominator: Math.pow(2, denom),
       tick,
     };
   } else {
-    console.error(`Unknown sync track event '${frag}'.`);
+    console.warn(`Unknown sync track event '${frag}'.`);
     return null;
   }
 }
 
-function parseSyncTrack(lines: string[]): SyncTrack {
+function parseSyncTrack(lines: string[]): SyncTrackInternal {
   const events = lines
     .map((line) => {
       const ev = parseTickEventLine(line);
@@ -193,6 +203,26 @@ function parseSyncTrack(lines: string[]): SyncTrack {
     bpms,
     allEvents: events,
   };
+}
+
+function parseEventsSection(
+  lines: string[],
+  resolution: number,
+  bpms: Timed<Bpm>[]
+): NonNullable<ParsedChart["Events"]> {
+  const result: Timed<SimpleEvent>[] = [];
+  // TODO simple parse of E events
+  return getTimedTrack(result, resolution, bpms);
+}
+
+function getSectionParser(title: string): null | SectionParser {
+  if (title === "Events") {
+    return parseEventsSection;
+  }
+
+  // TODO support DifficultyInstrument sections - probably just EMHX Single for now
+
+  return null;
 }
 
 export function parseChart(rawChart: string): ParsedChart {
@@ -231,19 +261,33 @@ export function parseChart(rawChart: string): ParsedChart {
     }
   }
 
-  const song = parseSongSection(sections["Song"]);
-  const { resolution } = song;
+  const Song = parseSongSection(sections["Song"]);
+  delete sections["Song"];
+  const { resolution } = Song;
   const { timeSignatures, allEvents, bpms } = parseSyncTrack(
     sections["SyncTrack"]
   );
-  const timedBpms = getTimedBpms(bpms, song.resolution);
-
-  return {
-    song,
-    syncTrack: {
-      bpms: timedBpms,
-      timeSignatures: getTimedTrack(timeSignatures, resolution, timedBpms),
-      allEvents: getTimedTrack(allEvents, resolution, timedBpms),
-    },
+  delete sections["SyncTrack"];
+  const timedBpms = getTimedBpms(bpms, Song.resolution);
+  const SyncTrack = {
+    bpms: timedBpms,
+    timeSignatures: getTimedTrack(timeSignatures, resolution, timedBpms),
+    allEvents: getTimedTrack(allEvents, resolution, timedBpms),
   };
+
+  const result: Record<string, any> = {
+    Song,
+    SyncTrack,
+  };
+
+  for (const [title, lines] of Object.entries(sections)) {
+    const parseFn = getSectionParser(title);
+    if (parseFn === null) {
+      console.warn(`Unsupported chart section '[${title}]'.`);
+    } else {
+      result[title] = parseFn(lines, resolution, timedBpms);
+    }
+  }
+
+  return result as ParsedChart;
 }
