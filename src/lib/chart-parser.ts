@@ -66,10 +66,11 @@ type SectionParser = (
 ) => OtherChartSection;
 
 const requiredSections = ["Song", "SyncTrack"];
-const sectionTitleRegex = /^\[(.*)\]$/;
+const sectionTitleRegex = /^\[(.+)\]$/;
 const commonLineRegex = /^(.+)\s+=\s+(.+)$/;
 const quotedStringRegex = /^\"|\"$/g;
-const syncTrackEventRegex = /^(TS|B)\s+(.*)/;
+const syncTrackEventRegex = /^(TS|B)\s+(.+)/;
+const simpleEventRegex = /^E\s+(.+)/;
 const numericalSongSections = [
   "previewstart",
   "previewend",
@@ -81,7 +82,6 @@ const numericalSongSections = [
 function parseCommonLine(line: string): [string, string] | null {
   const res = line.match(commonLineRegex);
   if (res === null || res.length !== 3) {
-    console.warn(`Failed to parse common line: '${line}'.`);
     return null;
   }
 
@@ -95,32 +95,28 @@ function parseTickEventLine(line: string): [number, string] | null {
   }
   const tick = Number.parseInt(commonLine[0]);
   if (!isInteger(tick)) {
-    console.warn(`Invalid tick event line '${line}'.`);
     return null;
   }
   return [tick, commonLine[1]];
 }
 
-function parseCommonLines(lines: string[]): [string, string][] {
-  return lines.map(parseCommonLine).filter((a) => a !== null) as [
-    string,
-    string
-  ][];
-}
-
 function parseSongSection(lines: string[]): SongSection {
   const result = Object.create(null);
-  const parsedLines = parseCommonLines(lines);
-  for (const [key, value] of parsedLines) {
+  for (const line of lines) {
+    const parsedLine = parseCommonLine(line);
+    if (parsedLine === null) {
+      console.warn(`Invalid [Song] entry: '${line}'.`);
+      continue;
+    }
+
+    const [key, value] = parsedLine;
     let valueFinal: string | number = value.replace(quotedStringRegex, "");
     const keyFinal = key.toLowerCase();
 
     if (numericalSongSections.includes(keyFinal)) {
       valueFinal = Number.parseFloat(valueFinal);
       if (!isFinite(valueFinal)) {
-        console.warn(
-          `Failed to parse numerical song section property '${key} = ${value}'.`
-        );
+        console.warn(`Invalid numerical [Song] entry: '${key} = ${value}'.`);
         continue;
       }
     }
@@ -129,7 +125,7 @@ function parseSongSection(lines: string[]): SongSection {
   }
 
   if (!("resolution" in result)) {
-    throw new Error("Missing resolution in song section.");
+    throw new Error("Invalid [Song] section - missing 'resolution'.");
   }
   return result as SongSection;
 }
@@ -178,19 +174,24 @@ function parseSyncTrackEvent([tick, frag]: [
 }
 
 function parseSyncTrack(lines: string[]): SyncTrackInternal {
-  const events = lines
-    .map((line) => {
-      const ev = parseTickEventLine(line);
-      return ev ? parseSyncTrackEvent(ev) : null;
-    })
-    .filter((a) => a !== null) as SyncTrackEvent[];
+  const rawEvents = lines.map((line) => {
+    const ev = parseTickEventLine(line);
+    return ev ? parseSyncTrackEvent(ev) : null;
+  });
 
-  events.sort((a, b) => a.tick - b.tick);
+  rawEvents.sort((a, b) => (a && b ? a.tick - b.tick : 0));
 
   const timeSignatures: TimeSignature[] = [];
   const bpms: Bpm[] = [];
+  const allEvents: SyncTrackEvent[] = [];
 
-  for (const event of events) {
+  for (const [i, event] of rawEvents.entries()) {
+    if (event === null) {
+      console.warn(`Invalid [SyncTrack] entry '${lines[i]}'.`);
+      continue;
+    }
+
+    allEvents.push(event);
     if ("bpm" in event) {
       bpms.push(event);
     } else {
@@ -201,7 +202,7 @@ function parseSyncTrack(lines: string[]): SyncTrackInternal {
   return {
     timeSignatures,
     bpms,
-    allEvents: events,
+    allEvents,
   };
 }
 
@@ -210,8 +211,25 @@ function parseEventsSection(
   resolution: number,
   bpms: Timed<Bpm>[]
 ): NonNullable<ParsedChart["Events"]> {
-  const result: Timed<SimpleEvent>[] = [];
-  // TODO simple parse of E events
+  const result: SimpleEvent[] = [];
+  for (const line of lines) {
+    const tickEvent = parseTickEventLine(line);
+    if (tickEvent === null) {
+      console.warn(`Invalid [Events] entry '${line}'.`);
+      continue;
+    }
+    const frags = tickEvent[1].match(simpleEventRegex);
+    if (frags === null || frags.length !== 2) {
+      console.warn(`Invalid [Events] entry '${line}'.`);
+      continue;
+    }
+
+    const value = frags[1].replace(quotedStringRegex, "");
+    result.push({
+      value,
+      tick: tickEvent[0],
+    });
+  }
   return getTimedTrack(result, resolution, bpms);
 }
 
