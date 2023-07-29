@@ -37,3 +37,7 @@ export function formatTimespan(secs: number) {
 
   return dat.slice(i);
 }
+
+export function roundNearest(value: number, nearest: number): number {
+  return Math.round(value / nearest) * nearest;
+}
