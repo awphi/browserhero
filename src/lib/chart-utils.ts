@@ -1,4 +1,4 @@
-import type { Bpm, TickEvent, Timed } from "./chart-parser";
+import type { Bpm, ParsedChart, TickEvent, Timed } from "./chart-parser";
 
 export function disToTime(
   tickStart: number,
@@ -87,7 +87,7 @@ export function getTimedTrack<T extends TickEvent>(
   }));
 }
 
-export function getLastEvent<T>(
+export function findLastTimeEvent<T>(
   time: number,
   events: Timed<T>[],
   equal: boolean = true
@@ -110,11 +110,22 @@ export function timeToTick(
 ) {
   if (time < 0) time = 0;
 
-  const prevBPM = getLastEvent(time, bpms);
+  const prevBPM = findLastTimeEvent(time, bpms);
 
   let position = 0;
   position = prevBPM.tick;
   position += timeToDis(prevBPM.assignedTime, time, resolution, prevBPM.bpm);
 
   return position;
+}
+
+export function findLastTickEvent<T extends TickEvent>(
+  tick: number,
+  arr: T[]
+): T {
+  let idx = findClosestPosition(tick, arr);
+  if (arr[idx].tick > tick) {
+    idx--;
+  }
+  return arr[idx];
 }

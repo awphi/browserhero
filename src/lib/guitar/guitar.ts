@@ -1,9 +1,11 @@
 import type { Bpm, ParsedChart, TimeSignature, Timed } from "$lib/chart-parser";
 import {
   findClosestPosition,
-  getLastEvent,
+  findLastTickEvent,
   tickToTime,
+  timeToTick,
 } from "$lib/chart-utils";
+import { roundNearest } from "$lib/util";
 
 export class Guitar {
   private readonly _speed: number = 340;
@@ -25,7 +27,6 @@ export class Guitar {
     parent.appendChild(this._canvas);
     this.setSize(this._canvas, this._ctx);
     this._chart = chart;
-    this.update(this._time);
   }
 
   private setSize(
@@ -47,12 +48,36 @@ export class Guitar {
     requestAnimationFrame(this.draw.bind(this));
   }
 
+  timeToTick(seconds: number) {
+    return timeToTick(
+      seconds,
+      this._chart.Song.resolution,
+      this._chart.SyncTrack.bpms
+    );
+  }
+
+  tickToTime(tick: number) {
+    return tickToTime(
+      tick,
+      this._chart.Song.resolution,
+      this._chart.SyncTrack.bpms
+    );
+  }
+
+  tickToY(tick: number) {
+    return this.timeToY(this.tickToTime(tick));
+  }
+
   timeToY(time: number) {
     return this._canvas.height - time * this._speed + this._time * this._speed;
   }
 
   yToTime(y: number) {
     return this._canvas.height / this._speed + this._time - y / this._speed;
+  }
+
+  yToTick(y: number) {
+    return this.timeToTick(this.yToTime(y));
   }
 
   private draw() {
@@ -65,14 +90,14 @@ export class Guitar {
     _ctx.textBaseline = "top";
     _ctx.fillText(`${_time}`, 10, 10);
 
-    this.drawFrets();
+    this.drawBeatLines();
     this.drawSyncEvents();
   }
 
   private drawSyncEvents() {
     const { _ctx, _chart, _time } = this;
     const w = this._canvas.width;
-    const endTime = this.yToTime(0) + 0.1;
+    const endTime = this.yToTime(-100);
     _ctx.textBaseline = "middle";
     for (const ev of _chart.SyncTrack.allEvents) {
       if (ev.assignedTime < _time) {
@@ -93,46 +118,52 @@ export class Guitar {
     }
   }
 
-  private drawFrets() {
+  private drawBeatLines() {
     const { _ctx, _canvas, _chart } = this;
     const w = _canvas.width;
-    const endTime = this.yToTime(0) + 0.1;
-    const bpms = _chart.SyncTrack.bpms;
+    const h = _canvas.height;
+    const res = _chart.Song.resolution;
+    const endTick = this.yToTick(-100);
+    const startTick = 0;
+    const { timeSignatures } = _chart.SyncTrack;
 
     _ctx.lineWidth = 5;
-    _ctx.strokeStyle = "#191E24";
 
-    for (let i = 0; i < bpms.length; i++) {
-      const bpm = bpms[i];
-      const nextBpm: Timed<Bpm> | undefined = bpms[i + 1];
-      const ts = getLastEvent(
-        bpm.assignedTime,
-        this._chart.SyncTrack.timeSignatures,
-        false
-      );
-      // we might need this for coloring properly
-      const beatsPerBar = ts.numerator / ts.denominator / 0.25;
-      const step = 60 / (ts.denominator / 2) / bpm.bpm;
+    let t = startTick;
+    let lineIndex = 0;
+    let ts = findLastTickEvent(startTick, timeSignatures);
+    let beatsPerBar = ts.numerator / ts.denominator / 0.25;
 
-      let time = bpm.assignedTime;
-      let beat = 0;
-      // TODO not sure if this is the right way to draw frets but will suffice for now
-      while (time < endTime && (!nextBpm || time < nextBpm.assignedTime)) {
-        if (beat % 2 === 0) {
+    while (t <= endTick) {
+      const y = this.tickToY(t);
+      if (y >= 0 && y <= h) {
+        // we draw beat lines on half-beats so we divide the denom by two
+        const barLineMultiple = beatsPerBar * (ts.denominator / 2);
+        if (lineIndex % barLineMultiple === 0) {
+          // bar line
+          _ctx.strokeStyle = "rgba(25,30,36, 1)";
+        } else if (lineIndex % 2 === 0) {
+          // even beat line
           _ctx.strokeStyle = "rgba(25,30,36, 0.6)";
         } else {
+          // odd beat line
           _ctx.strokeStyle = "rgba(25,30,36, 0.3)";
         }
-        if (time > this._time) {
-          const y = this.timeToY(time);
-          _ctx.beginPath();
-          _ctx.moveTo(0, y);
-          _ctx.lineTo(w, y);
-          _ctx.stroke();
-        }
-        time += step;
-        beat++;
+        _ctx.beginPath();
+        _ctx.moveTo(0, y);
+        _ctx.lineTo(w, y);
+        _ctx.stroke();
       }
+
+      ts = findLastTickEvent(t, timeSignatures);
+      const newBeatsPerBar = ts.numerator / ts.denominator / 0.25;
+      if (newBeatsPerBar !== beatsPerBar) {
+        lineIndex = 0;
+        beatsPerBar = newBeatsPerBar;
+      }
+      const stepDivisor = ts.denominator / 2;
+      t += res / stepDivisor;
+      lineIndex++;
     }
   }
 
