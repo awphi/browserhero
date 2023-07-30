@@ -8,7 +8,7 @@ import {
 import { roundNearest } from "$lib/util";
 
 export class Guitar {
-  private readonly _speed: number = 340;
+  private readonly _speed: number = 400;
 
   //private readonly _track: NoteTrack | undefined;
   private readonly _chart: ParsedChart;
@@ -108,7 +108,7 @@ export class Guitar {
 
       const y = this.timeToY(ev.assignedTime);
       _ctx.beginPath();
-      if ("bpm" in ev) {
+      if (ev.type === "bpm") {
         _ctx.textAlign = "left";
         _ctx.fillText(`${ev.bpm}bpm`, 5, y);
       } else {

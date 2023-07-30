@@ -1,4 +1,4 @@
-export const buttonRadius = 40;
+export const buttonRadius = 55;
 export const buttonOffset = 20;
 
 export function getNoteX(index: number, stringOffset: number): number {
