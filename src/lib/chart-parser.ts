@@ -72,7 +72,7 @@ export type ParsedChart = {
   SyncTrack: TimedTracks<SyncTrackInternal>;
   Events?: Timed<SimpleEvent>[];
 } & {
-  [instrument in ChartTrack]: Timed<PlayEvent>[];
+  [instrument in ChartTrack]?: Timed<PlayEvent>[];
 };
 
 // Internal types used to build the ParsedChart
