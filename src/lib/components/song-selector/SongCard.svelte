@@ -57,7 +57,7 @@
   const instrumentIconMap: Record<Instrument, string> = {
     guitar: "ph-guitar ph-fill",
     keys: "ph-piano-keys ph-fill",
-    bass: "ph-guitar ph",
+    bass: "ph-guitar ph-fill",
     vocals: "ph-microphone-stage ph-fill",
     drums: "ph-record ph-fill",
     rhythm: "ph-hands-clapping ph-fill",

@@ -6,6 +6,7 @@
   import SongMetaDisplay from "$lib/components/SongMetaDisplay.svelte";
   import { loadSongArchiveFromUrl } from "$lib/song-loader";
   import CanvasGuitar from "$lib/components/CanvasGuitar.svelte";
+  import ThreeGuitar from "$lib/components/ThreeGuitar.svelte";
 
   let activeSongPoint = 0;
   let paused = true;
@@ -17,7 +18,7 @@
 
   onMount(async () => {
     activeSong.set("loading");
-    const testUrl = new URL("/ghost-town.zip", import.meta.url).toString();
+    const testUrl = new URL("/mr-brightside.7z", import.meta.url).toString();
     try {
       const song = await loadSongArchiveFromUrl(testUrl);
       activeSong.set(song);
@@ -40,6 +41,7 @@
   <Menu class="absolute left-0 top-2 z-10" />
   <div class="flex w-full h-full items-center justify-center">
     <CanvasGuitar {activeSongPoint} />
+    <!--<ThreeGuitar {activeSongPoint} /> -->
   </div>
   {#if typeof $activeSong === "object"}
     <SongMetaDisplay
