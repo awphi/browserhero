@@ -101,7 +101,17 @@
     bottom: 0;
     transform: perspective(900px) rotateX(45deg);
     transform-origin: center bottom;
-    @apply bg-neutral outline outline-4 outline-base-200;
+    background: linear-gradient(
+      90deg,
+      hsl(213.3, 17.6%, 16%),
+      hsl(213.3, 17.6%, 18%),
+      hsl(213.3, 17.6%, 21%),
+      hsl(213.3, 17.6%, 22%),
+      hsl(213.3, 17.6%, 21%),
+      hsl(213.3, 17.6%, 18%),
+      hsl(213.3, 17.6%, 16%)
+    );
+    @apply outline outline-4 outline-base-200;
   }
 
   .button {
