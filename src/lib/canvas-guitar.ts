@@ -2,7 +2,7 @@ import type { ChartTrack, ParsedChart } from "$lib/chart-parser";
 import { findLastTickEvent, tickToTime, timeToTick } from "$lib/chart-utils";
 import { getNoteX, type ButtonDef } from "./guitar-utils";
 
-export class Guitar {
+export class CanvasGuitar {
   private readonly speed: number = 900;
 
   private readonly canvas: HTMLCanvasElement;

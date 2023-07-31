@@ -1,14 +1,14 @@
 <script lang="ts">
   import { activeSong } from "../stores";
-  import { Guitar } from "$lib/guitar/guitar";
-  import { getNoteX, type ButtonDef } from "$lib/guitar/guitar-utils";
+  import { CanvasGuitar } from "$lib/canvas-guitar";
+  import { getNoteX, type ButtonDef } from "$lib/guitar-utils";
 
   export let activeSongPoint: number;
-  export let guitarWidth = 600;
-  export let buttonRadius = 55;
+  export let guitarWidth = 700;
+  export let buttonRadius = 60;
   export let buttonOffset = 20;
 
-  let guitar: Guitar | undefined;
+  let guitar: CanvasGuitar | undefined;
   let guitarContainer: HTMLDivElement;
 
   let buttons: ButtonDef[] = [
@@ -40,7 +40,7 @@
     }
 
     if (typeof $activeSong === "object" && guitarContainer) {
-      guitar = new Guitar(
+      guitar = new CanvasGuitar(
         guitarContainer,
         $activeSong.chart,
         guitarWidth,
@@ -69,7 +69,13 @@
   {/each} -->
 
   <div
-    style={`height: calc(100% - ${buttonRadius}px - ${buttonOffset}px);`}
+    style="background: linear-gradient(#0B0D0F, transparent); height: 300px; width: {guitarWidth +
+      8}px; "
+    class="absolute z-20 -left-1"
+  />
+
+  <div
+    style="height: calc(100% - {buttonRadius}px - {buttonOffset}px);"
     class="absolute w-full"
     bind:this={guitarContainer}
   />
@@ -77,12 +83,11 @@
   {#each buttons as button, i}
     <div
       class="button"
-      style={`
-    left: ${getNoteX(i, guitarWidth / buttons.length)}px; 
-    width: ${buttonRadius * 2}px;
-    background-color: ${button.color};
-    bottom: ${buttonOffset}px;
-  `}
+      style="left: {getNoteX(
+        i,
+        guitarWidth / buttons.length
+      )}px; width: {buttonRadius *
+        2}px; background-color: {button.color}; bottom: {buttonOffset}px;"
     >
       <div class="rounded-full w-2/3 aspect-square bg-base-100" />
     </div>

@@ -15,3 +15,8 @@ body {
     text-transform: none;
   }
 }
+
+html, body{
+  height: 100%;
+}
+
