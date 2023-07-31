@@ -71,7 +71,7 @@
   <div
     style="background: linear-gradient(#0B0D0F, transparent); height: 300px; width: {guitarWidth +
       8}px; "
-    class="absolute z-20 -left-1"
+    class="absolute z-20 -left-1 -top-1"
   />
 
   <div
