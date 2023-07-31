@@ -77,11 +77,13 @@ export class CanvasGuitar {
   }
 
   timeToY(time: number) {
-    return this.canvas.height - time * this.speed + this.time * this.speed;
+    const hmod = this.canvas.height / devicePixelRatio;
+    return hmod - time * this.speed + this.time * this.speed;
   }
 
   yToTime(y: number) {
-    return this.canvas.height / this.speed + this.time - y / this.speed;
+    const hmod = this.canvas.height / devicePixelRatio;
+    return hmod / this.speed + this.time - y / this.speed;
   }
 
   yToTick(y: number) {
