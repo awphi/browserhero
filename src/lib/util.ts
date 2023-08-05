@@ -1,4 +1,7 @@
 import invert from "lodash/invert";
+import type { SongBundle } from "./song-loader";
+
+export type KeyMap = Record<string, number | "strum">;
 
 const mimeTypeToExtensions: Record<string, string> = {
   "application/rar": "rar",

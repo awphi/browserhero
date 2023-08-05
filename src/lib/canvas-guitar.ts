@@ -1,6 +1,15 @@
+import { browser } from "$app/environment";
 import type { ChartTrack, ParsedChart } from "$lib/chart-parser";
 import { findLastTickEvent, tickToTime, timeToTick } from "$lib/chart-utils";
 import { getNoteX, type ButtonDef } from "./guitar-utils";
+
+const hopoColour = "#F8EFDD";
+const openNoteColour = "#76448A";
+const base100Colour = browser
+  ? `hsl(${getComputedStyle(document.documentElement).getPropertyValue(
+      "--b1"
+    )})`
+  : "black";
 
 export class CanvasGuitar {
   private readonly speed: number = 900;
@@ -123,15 +132,17 @@ export class CanvasGuitar {
       if (playEvent.type === "note") {
         const y = this.timeToY(playEvent.assignedTime);
         const stringOffset = this.guitarWidth / this.buttons.length;
-        ctx.strokeStyle = "rgb(29,35,42)";
+
+        ctx.strokeStyle = base100Colour;
         ctx.lineCap = "round";
         ctx.lineWidth = 4;
 
+        // open note
         if (playEvent.note === 7) {
           const x1 = getNoteX(0, stringOffset) - this.buttonRadius + 8;
           const x2 = getNoteX(4, stringOffset) + this.buttonRadius - 8;
           const openNoteHeight = this.buttonRadius / 2;
-          ctx.fillStyle = playEvent.isHOPO ? "#F8EFDD" : "#76448A";
+          ctx.fillStyle = playEvent.isHOPO ? hopoColour : openNoteColour;
           ctx.beginPath();
           ctx.roundRect(
             x1,
@@ -152,7 +163,7 @@ export class CanvasGuitar {
           ctx.fill();
           ctx.stroke();
 
-          ctx.fillStyle = playEvent.isHOPO ? "#F8EFDD" : "rgb(29,35,42)";
+          ctx.fillStyle = playEvent.isHOPO ? hopoColour : base100Colour;
           ctx.beginPath();
           ctx.arc(x, y, (this.buttonRadius * 2) / 3 - 4, 0, 2 * Math.PI);
           ctx.fill();

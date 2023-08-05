@@ -1,7 +1,8 @@
 <script lang="ts">
-  import { activeSong } from "../stores";
+  import { activeSong, keyMap } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
-  import { getNoteX, type ButtonDef } from "$lib/guitar-utils";
+  import { getNoteX, type Button } from "$lib/guitar-utils";
+  import { onMount } from "svelte";
 
   export let activeSongPoint: number;
   export let guitarWidth = 700;
@@ -11,28 +12,61 @@
   let guitar: CanvasGuitar | undefined;
   let guitarContainer: HTMLDivElement;
 
-  let buttons: ButtonDef[] = [
+  let buttons: Button[] = [
     {
       color: "rgb(35,155,86)",
       tapColor: "rgba(35,155,86, 0.5)",
+      isDown: false,
     },
     {
       color: "rgb(231,76,60)",
       tapColor: "rgba(231,76,60, 0.5)",
+      isDown: false,
     },
     {
       color: "rgb(244,208,63)",
       tapColor: "rgba(244,208,63, 0.5)",
+      isDown: false,
     },
     {
       color: "rgb(52,152,219)",
       tapColor: "rgba(52,152,219, 0.5)",
+      isDown: false,
     },
     {
       color: "rgb(220,118,51)",
       tapColor: "rgba(220,118,51, 0.5)",
+      isDown: false,
     },
   ];
+
+  function keyDown(e: KeyboardEvent) {
+    const action = $keyMap[e.key];
+    if (action !== undefined) {
+      if (action === "strum") {
+        // TODO
+      } else {
+        buttons[action].isDown = true;
+      }
+    }
+  }
+
+  function keyUp(e: KeyboardEvent) {
+    const action = $keyMap[e.key];
+    if (typeof action === "number") {
+      buttons[action].isDown = false;
+    }
+  }
+
+  onMount(() => {
+    window.addEventListener("keydown", keyDown);
+    window.addEventListener("keyup", keyUp);
+
+    return () => {
+      window.removeEventListener("keyup", keyUp);
+      window.removeEventListener("keydown", keyDown);
+    };
+  });
 
   $: {
     if (guitar) {
@@ -89,12 +123,23 @@
       )}px; width: {buttonRadius *
         2}px; background-color: {button.color}; bottom: {buttonOffset}px;"
     >
-      <div class="rounded-full w-2/3 aspect-square bg-base-100" />
+      <div class="button-center">
+        <div class="button-center-actuator" class:pressed={button.isDown} />
+      </div>
     </div>
   {/each}
 </div>
 
 <style lang="postcss">
+  .button-center-actuator {
+    transition-property: all;
+    @apply bg-base-100 border-4 border-base-100;
+  }
+
+  .pressed {
+    background-color: #f8efdd;
+  }
+
   .guitar {
     height: 2000px;
     position: absolute;
@@ -112,6 +157,14 @@
       hsl(213.3, 17.6%, 16%)
     );
     @apply outline outline-4 outline-base-200;
+  }
+
+  .button-center {
+    @apply relative w-2/3 aspect-square;
+  }
+
+  .button-center > * {
+    @apply absolute left-0 top-0 w-full h-full rounded-full;
   }
 
   .button {

@@ -15,7 +15,7 @@
     },
     {
       icon: "ph-game-controller",
-      title: "Gamepad Settings",
+      title: "Controls Settings",
       component: undefined,
     },
   ] as const;
