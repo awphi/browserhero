@@ -1,5 +1,4 @@
 import invert from "lodash/invert";
-import type { SongBundle } from "./song-loader";
 
 export type KeyMap = Record<string, number | "strum">;
 
