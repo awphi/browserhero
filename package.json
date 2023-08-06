@@ -34,7 +34,6 @@
     "@vercel/kv": "^0.2.2",
     "7z-wasm": "^1.0.2",
     "chart2json": "^0.5.1",
-    "crunker": "^2.1.0",
     "dotenv": "^16.3.1",
     "exponential-backoff": "^3.1.1",
     "googleapis": "^122.0.0",

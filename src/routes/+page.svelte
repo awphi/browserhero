@@ -19,7 +19,7 @@
 
   onMount(async () => {
     activeSong.set("loading");
-    const testUrl = new URL("/ghost-town.zip", import.meta.url).toString();
+    const testUrl = new URL("/mr-brightside.7z", import.meta.url).toString();
     try {
       const song = await loadSongArchiveFromUrl(testUrl);
       activeSong.set(song);
