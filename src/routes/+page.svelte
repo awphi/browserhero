@@ -7,6 +7,7 @@
   import { loadSongArchiveFromUrl } from "$lib/song-loader";
   import CanvasGuitar from "$lib/components/CanvasGuitar.svelte";
   import ThreeGuitar from "$lib/components/ThreeGuitar.svelte";
+  import AudioTrack from "$lib/components/AudioTrack.svelte";
 
   let activeSongPoint = 0;
   let paused = true;
@@ -49,15 +50,10 @@
       bind:activeSongPoint
       class="absolute top-2 right-2"
     />
-    <div class="hidden">
-      <audio
-        src={Object.values($activeSong.audio)[0]}
-        bind:paused
-        bind:currentTime={activeSongPoint}
-      />
-      {#each Object.values($activeSong.audio).slice(1) as audioUrl}
-        <audio src={audioUrl} bind:paused />
-      {/each}
-    </div>
+    <AudioTrack
+      song={$activeSong}
+      bind:currentTime={activeSongPoint}
+      bind:paused
+    />
   {/if}
 </div>
