@@ -48,6 +48,7 @@ export class CanvasGuitar {
     this.resizeObserver.observe(this.parent);
     this.setTrack(track);
     parent.appendChild(this.canvas);
+    this.updateSize();
   }
 
   setTrack(track?: ChartTrack): void {
