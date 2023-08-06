@@ -4,7 +4,6 @@ export function getNoteX(index: number, stringOffset: number): number {
 
 export interface ButtonDef {
   color: string;
-  tapColor: string;
 }
 
 export interface Button extends ButtonDef {

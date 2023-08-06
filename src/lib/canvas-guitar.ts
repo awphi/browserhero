@@ -1,5 +1,10 @@
 import { browser } from "$app/environment";
-import type { ChartTrack, ParsedChart } from "$lib/chart-parser";
+import type {
+  ChartTrack,
+  NoteEvent,
+  ParsedChart,
+  Timed,
+} from "$lib/chart-parser";
 import { findLastTickEvent, tickToTime, timeToTick } from "$lib/chart-utils";
 import { getNoteX, type ButtonDef } from "./guitar-utils";
 
@@ -21,6 +26,8 @@ export class CanvasGuitar {
 
   private track: ChartTrack | undefined;
   private time: number = 0;
+  private tick: number = 0;
+  private endTick: number = 0;
 
   constructor(
     parent: HTMLElement,
@@ -62,6 +69,8 @@ export class CanvasGuitar {
 
   update(seconds: number) {
     this.time = seconds;
+    this.tick = this.timeToTick(seconds);
+    this.endTick = this.yToTick(0);
     requestAnimationFrame(this.draw.bind(this));
   }
 
@@ -110,78 +119,110 @@ export class CanvasGuitar {
     _ctx.fillText(`${_time}`, 10, 10);
 
     this.drawBeatLines();
-    this.drawSyncEvents();
+    //this.drawSyncEvents();
     this.drawTrack();
   }
 
+  private drawNote(note: Timed<NoteEvent>): void {
+    const { ctx } = this;
+
+    const y = this.timeToY(note.assignedTime);
+    const stringOffset = this.guitarWidth / this.buttons.length;
+
+    ctx.strokeStyle = base100Colour;
+    ctx.lineCap = "round";
+    ctx.lineWidth = 4;
+
+    // open note
+    if (note.note === 7) {
+      const x1 = getNoteX(0, stringOffset) - this.buttonRadius + 8;
+      const x2 = getNoteX(4, stringOffset) + this.buttonRadius - 8;
+      const openNoteHeight = this.buttonRadius / 2;
+      ctx.fillStyle = note.isHOPO ? hopoColour : openNoteColour;
+      ctx.beginPath();
+      ctx.roundRect(
+        x1,
+        y - openNoteHeight,
+        x2 - x1,
+        openNoteHeight * 2,
+        Number.MAX_SAFE_INTEGER
+      );
+      ctx.fill();
+      ctx.stroke();
+    } else {
+      const button = this.buttons[note.note];
+      const x = getNoteX(note.note, stringOffset);
+
+      if (note.duration > 0) {
+        const durationWidth = 16;
+        const yEnd = this.tickToY(note.tick + note.duration);
+        ctx.strokeStyle = base100Colour;
+        ctx.fillStyle = button.color;
+        ctx.beginPath();
+        ctx.roundRect(
+          x - durationWidth / 2,
+          yEnd,
+          durationWidth,
+          y - yEnd,
+          Number.MAX_SAFE_INTEGER
+        );
+        ctx.fill();
+        ctx.stroke();
+      }
+
+      ctx.fillStyle = button.color;
+      ctx.beginPath();
+      ctx.arc(x, y, this.buttonRadius, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = note.isHOPO ? hopoColour : base100Colour;
+      ctx.beginPath();
+      ctx.arc(x, y, (this.buttonRadius * 2) / 3 - 4, 0, 2 * Math.PI);
+      ctx.fill();
+      ctx.stroke();
+
+      if (note.tap) {
+        ctx.strokeStyle = hopoColour;
+        ctx.beginPath();
+        ctx.arc(x, y, (this.buttonRadius * 2) / 3 - 8, 0, 2 * Math.PI);
+        ctx.stroke();
+      }
+    }
+  }
+
   private drawTrack(): void {
-    const { ctx, chart, time, track } = this;
+    const { chart, track, tick, endTick } = this;
     const chartTrack = track ? chart[track] : undefined;
     if (!chartTrack) {
       return;
     }
 
-    const endTime = this.yToTime(-100);
     for (const playEvent of chartTrack) {
-      if (playEvent.assignedTime < time) {
+      const eventEnd =
+        playEvent.type === "note"
+          ? playEvent.tick + playEvent.duration
+          : playEvent.tick;
+      if (eventEnd < tick) {
         continue;
-      } else if (playEvent.assignedTime > endTime) {
+      } else if (playEvent.tick > endTick) {
         break;
       }
 
       if (playEvent.type === "note") {
-        const y = this.timeToY(playEvent.assignedTime);
-        const stringOffset = this.guitarWidth / this.buttons.length;
-
-        ctx.strokeStyle = base100Colour;
-        ctx.lineCap = "round";
-        ctx.lineWidth = 4;
-
-        // open note
-        if (playEvent.note === 7) {
-          const x1 = getNoteX(0, stringOffset) - this.buttonRadius + 8;
-          const x2 = getNoteX(4, stringOffset) + this.buttonRadius - 8;
-          const openNoteHeight = this.buttonRadius / 2;
-          ctx.fillStyle = playEvent.isHOPO ? hopoColour : openNoteColour;
-          ctx.beginPath();
-          ctx.roundRect(
-            x1,
-            y - openNoteHeight,
-            x2 - x1,
-            openNoteHeight * 2,
-            Number.MAX_SAFE_INTEGER
-          );
-          ctx.fill();
-          ctx.stroke();
-        } else {
-          // TODO draw duration notes
-          const button = this.buttons[playEvent.note];
-          const x = getNoteX(playEvent.note, stringOffset);
-          ctx.fillStyle = playEvent.tap ? button.tapColor : button.color;
-          ctx.beginPath();
-          ctx.arc(x, y, this.buttonRadius, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.stroke();
-
-          ctx.fillStyle = playEvent.isHOPO ? hopoColour : base100Colour;
-          ctx.beginPath();
-          ctx.arc(x, y, (this.buttonRadius * 2) / 3 - 4, 0, 2 * Math.PI);
-          ctx.fill();
-          ctx.stroke();
-        }
+        this.drawNote(playEvent);
       }
     }
   }
 
   private drawSyncEvents() {
-    const { ctx, chart, time } = this;
+    const { ctx, chart, tick, endTick } = this;
     const w = this.canvas.width;
-    const endTime = this.yToTime(-100);
     ctx.textBaseline = "middle";
     for (const ev of chart.SyncTrack.allEvents) {
-      if (ev.assignedTime < time) {
+      if (ev.tick < tick) {
         continue;
-      } else if (ev.assignedTime > endTime) {
+      } else if (ev.tick > endTick) {
         break;
       }
 
@@ -202,7 +243,6 @@ export class CanvasGuitar {
     const w = canvas.width;
     const h = canvas.height;
     const res = chart.Song.resolution;
-    const endTick = this.yToTick(-100);
     const startTick = 0;
     const { timeSignatures } = chart.SyncTrack;
 
@@ -213,7 +253,7 @@ export class CanvasGuitar {
     let ts = findLastTickEvent(startTick, timeSignatures);
     let beatsPerBar = ts.numerator / ts.denominator / 0.25;
 
-    while (t <= endTick) {
+    while (t <= this.endTick) {
       const y = this.tickToY(t);
       if (y >= 0 && y <= h) {
         // we draw beat lines on half-beats so we divide the denom by two

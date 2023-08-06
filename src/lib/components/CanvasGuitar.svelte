@@ -15,27 +15,22 @@
   let buttons: Button[] = [
     {
       color: "rgb(35,155,86)",
-      tapColor: "rgba(35,155,86, 0.5)",
       isDown: false,
     },
     {
       color: "rgb(231,76,60)",
-      tapColor: "rgba(231,76,60, 0.5)",
       isDown: false,
     },
     {
       color: "rgb(244,208,63)",
-      tapColor: "rgba(244,208,63, 0.5)",
       isDown: false,
     },
     {
       color: "rgb(52,152,219)",
-      tapColor: "rgba(52,152,219, 0.5)",
       isDown: false,
     },
     {
       color: "rgb(220,118,51)",
-      tapColor: "rgba(220,118,51, 0.5)",
       isDown: false,
     },
   ];
@@ -45,7 +40,7 @@
     if (action !== undefined) {
       if (action === "strum") {
         // TODO
-      } else {
+      } else if (!buttons[action].isDown) {
         buttons[action].isDown = true;
       }
     }
