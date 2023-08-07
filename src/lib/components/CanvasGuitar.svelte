@@ -40,7 +40,7 @@
     if (action !== undefined) {
       if (action === "strum") {
         // TODO
-      } else if (!buttons[action].isDown) {
+      } else {
         buttons[action].isDown = true;
       }
     }
@@ -118,21 +118,35 @@
       )}px; width: {buttonRadius *
         2}px; background-color: {button.color}; bottom: {buttonOffset}px;"
     >
-      <div class="button-center">
-        <div class="button-center-actuator" class:pressed={button.isDown} />
-      </div>
+      <div class="button-center button-center-lower" />
+      <div
+        class="button-center button-center-upper"
+        class:pressed={button.isDown}
+      />
     </div>
   {/each}
 </div>
 
 <style lang="postcss">
-  .button-center-actuator {
+  .button > * {
+    @apply w-2/3 aspect-square absolute;
+  }
+
+  .button-center-upper {
+    @apply bg-base-100 rounded-full;
     transition-property: all;
-    @apply bg-base-100 border-4 border-base-100;
+    transition-duration: 100ms;
+    box-shadow: rgba(0, 0, 0, 0.5) 0px 10px 0px;
+    transform: translateY(-10px);
   }
 
   .pressed {
-    background-color: #f8efdd;
+    box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 0px;
+    transform: translateY(0px);
+  }
+
+  .button {
+    @apply flex items-center justify-center -translate-x-1/2 aspect-square rounded-full absolute border-4 border-base-100;
   }
 
   .guitar {
@@ -151,22 +165,10 @@
       hsl(213.3, 17.6%, 18%),
       hsl(213.3, 17.6%, 16%)
     );
-    @apply outline outline-4 outline-base-200;
-  }
-
-  .button-center {
-    @apply relative w-2/3 aspect-square;
-  }
-
-  .button-center > * {
-    @apply absolute left-0 top-0 w-full h-full rounded-full;
-  }
-
-  .button {
-    @apply flex items-center justify-center -translate-x-1/2 aspect-square rounded-full absolute border-base-200 border-4;
+    @apply outline outline-4 outline-base-300;
   }
 
   .string {
-    @apply h-full absolute outline-2 outline outline-base-200 opacity-25;
+    @apply h-full absolute outline-2 outline outline-base-300 opacity-25;
   }
 </style>

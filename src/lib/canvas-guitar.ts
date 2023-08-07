@@ -55,7 +55,7 @@ export class CanvasGuitar {
     this.track = track;
   }
 
-  private updateSize() {
+  private updateSize(): void {
     const { canvas, ctx } = this;
     const { width, height } = window.getComputedStyle(canvas);
     const newWidth = Number.parseFloat(width);
@@ -68,14 +68,14 @@ export class CanvasGuitar {
     this.draw();
   }
 
-  update(seconds: number) {
+  update(seconds: number): void {
     this.time = seconds;
     this.tick = this.timeToTick(seconds);
     this.endTick = this.yToTick(0);
     requestAnimationFrame(this.draw.bind(this));
   }
 
-  timeToTick(seconds: number) {
+  timeToTick(seconds: number): number {
     return timeToTick(
       seconds,
       this.chart.Song.resolution,
@@ -83,7 +83,7 @@ export class CanvasGuitar {
     );
   }
 
-  tickToTime(tick: number) {
+  tickToTime(tick: number): number {
     return tickToTime(
       tick,
       this.chart.Song.resolution,
@@ -91,37 +91,31 @@ export class CanvasGuitar {
     );
   }
 
-  tickToY(tick: number) {
+  tickToY(tick: number): number {
     return this.timeToY(this.tickToTime(tick));
   }
 
-  timeToY(time: number) {
+  timeToY(time: number): number {
     const hmod = this.canvas.height / devicePixelRatio;
     return hmod - time * this.speed + this.time * this.speed;
   }
 
-  yToTime(y: number) {
+  yToTime(y: number): number {
     const hmod = this.canvas.height / devicePixelRatio;
     return hmod / this.speed + this.time - y / this.speed;
   }
 
-  yToTick(y: number) {
+  yToTick(y: number): number {
     return this.timeToTick(this.yToTime(y));
   }
 
   private draw() {
-    const w = this.canvas.width;
-    const h = this.canvas.height;
-    const { ctx: _ctx, time: _time } = this;
-
-    _ctx.clearRect(0, 0, w, h);
-    _ctx.fillStyle = "white";
-    _ctx.textBaseline = "top";
-    _ctx.fillText(`${_time}`, 10, 10);
+    const { ctx } = this;
+    ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
     this.drawBeatLines();
-    //this.drawSyncEvents();
     this.drawTrack();
+    this.drawDebug();
   }
 
   private drawNote(note: Timed<NoteEvent>): void {
@@ -133,6 +127,7 @@ export class CanvasGuitar {
     ctx.strokeStyle = base100Colour;
     ctx.lineCap = "round";
     ctx.lineWidth = 4;
+    ctx.setLineDash([]);
 
     // open note
     if (note.note === 7) {
@@ -216,10 +211,22 @@ export class CanvasGuitar {
     }
   }
 
-  private drawSyncEvents() {
-    const { ctx, chart, tick, endTick } = this;
+  private getHitZoneLimit(): number {
+    return this.canvas.height - this.buttonRadius * 2;
+  }
+
+  private drawDebug(): void {
+    const { ctx, chart, tick, endTick, time } = this;
     const w = this.canvas.width;
+    const h = this.canvas.height;
+
+    ctx.font = "30px monospace";
+    ctx.fillStyle = "white";
     ctx.textBaseline = "middle";
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "white";
+
+    // draw sync
     for (const ev of chart.SyncTrack.allEvents) {
       if (ev.tick < tick) {
         continue;
@@ -237,9 +244,18 @@ export class CanvasGuitar {
         ctx.fillText(`${ev.numerator} / ${ev.denominator}`, w - 5, y);
       }
     }
+
+    ctx.textAlign = "center";
+    ctx.setLineDash([w / 100, w / 50]);
+    ctx.beginPath();
+    const hitZoneY = this.getHitZoneLimit();
+    ctx.moveTo(0, hitZoneY);
+    ctx.lineTo(w, hitZoneY);
+    ctx.stroke();
+    ctx.fillText(`${time.toFixed(2)}s - ${tick}t`, w / 2, hitZoneY + 28);
   }
 
-  private drawBeatLines() {
+  private drawBeatLines(): void {
     const { ctx, canvas, chart } = this;
     const w = canvas.width;
     const h = canvas.height;
@@ -247,6 +263,7 @@ export class CanvasGuitar {
     const startTick = 0;
     const { timeSignatures } = chart.SyncTrack;
 
+    ctx.setLineDash([]);
     ctx.lineWidth = 5;
 
     let t = startTick;
@@ -287,7 +304,7 @@ export class CanvasGuitar {
     }
   }
 
-  destroy() {
+  destroy(): void {
     this.parent.removeChild(this.canvas);
     this.resizeObserver.disconnect();
   }
