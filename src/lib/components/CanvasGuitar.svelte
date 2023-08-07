@@ -11,6 +11,7 @@
 
   let guitar: CanvasGuitar | undefined;
   let guitarContainer: HTMLDivElement;
+  let canStrum: boolean = true;
 
   let buttons: Button[] = [
     {
@@ -35,12 +36,23 @@
     },
   ];
 
+  activeSong.subscribe(() => {
+    guitar?.clearHitNotes();
+  });
+
+  function strum(): void {
+    canStrum = false;
+    console.log("strum", guitar!.getNotesInHitArea());
+    // TODO organise hit notes into tick groups and decide what to hit
+    // the rules may get complicated with HOPOs
+  }
+
   function keyDown(e: KeyboardEvent) {
     const action = $keyMap[e.key];
-    if (action !== undefined) {
-      if (action === "strum") {
-        // TODO
-      } else {
+    if (action !== undefined && guitar) {
+      if (action === "strum" && canStrum) {
+        strum();
+      } else if (typeof action === "number") {
         buttons[action].isDown = true;
       }
     }
@@ -48,8 +60,12 @@
 
   function keyUp(e: KeyboardEvent) {
     const action = $keyMap[e.key];
-    if (typeof action === "number") {
-      buttons[action].isDown = false;
+    if (action !== undefined && guitar) {
+      if (action === "strum") {
+        canStrum = true;
+      } else if (typeof action === "number") {
+        buttons[action].isDown = false;
+      }
     }
   }
 

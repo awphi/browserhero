@@ -122,10 +122,10 @@ export function timeToTick(
 export function findLastTickEvent<T extends TickEvent>(
   tick: number,
   arr: T[]
-): T {
+): number {
   let idx = findClosestPosition(tick, arr);
   if (arr[idx].tick > tick) {
     idx--;
   }
-  return arr[idx];
+  return idx;
 }
