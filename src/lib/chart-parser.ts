@@ -69,14 +69,14 @@ export type ChartTrack = `${Difficulty}${Instrument}`;
 
 export type ParsedChart = {
   Song: SongSection;
-  SyncTrack: TimedTracks<SyncTrackInternal>;
+  SyncTrack: TimedTracks<SyncTrack>;
   Events?: Timed<SimpleEvent>[];
 } & {
   [instrument in ChartTrack]?: Timed<PlayEvent>[];
 };
 
 // Internal types used to build the ParsedChart
-interface SyncTrackInternal {
+interface SyncTrack {
   bpms: Bpm[];
   timeSignatures: TimeSignature[];
   allEvents: SyncTrackEvent[];
@@ -231,7 +231,7 @@ function parseSyncTrackEvent([tick, frag]: [
   }
 }
 
-function parseSyncTrack(lines: string[]): SyncTrackInternal {
+function parseSyncTrack(lines: string[]): SyncTrack {
   const tickEvents = parseAndSortTickLines(lines, "SyncTrack");
   const timeSignatures: TimeSignature[] = [];
   const bpms: Bpm[] = [];
@@ -250,6 +250,27 @@ function parseSyncTrack(lines: string[]): SyncTrackInternal {
     } else {
       timeSignatures.push(event);
     }
+  }
+
+  if (!bpms.some((e) => e.tick === 0)) {
+    const baseBpm: Bpm = {
+      type: "bpm",
+      tick: 0,
+      bpm: 120,
+    };
+    allEvents.unshift(baseBpm);
+    bpms.unshift(baseBpm);
+  }
+
+  if (!timeSignatures.some((e) => e.tick === 0)) {
+    const baseTs: TimeSignature = {
+      type: "ts",
+      tick: 0,
+      numerator: 4,
+      denominator: 4,
+    };
+    allEvents.unshift(baseTs);
+    timeSignatures.unshift(baseTs);
   }
 
   return {
