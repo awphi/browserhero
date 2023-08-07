@@ -23,11 +23,13 @@ export class CanvasGuitar {
   private readonly ctx: CanvasRenderingContext2D;
   private readonly parent: HTMLElement;
   private readonly resizeObserver: ResizeObserver;
+  private readonly hitNotes: Set<NoteEvent> = new Set();
 
   private track: ChartTrack | undefined;
   private time: number = 0;
   private tick: number = 0;
   private endTick: number = 0;
+  private notesInHitZone: NoteEvent[] = [];
 
   constructor(
     parent: HTMLElement,
@@ -118,11 +120,15 @@ export class CanvasGuitar {
     this.drawDebug();
   }
 
-  private drawNote(note: Timed<NoteEvent>): void {
-    const { ctx } = this;
+  private drawNote(note: Timed<NoteEvent>, hitZoneY: number): void {
+    const { ctx, canvas, notesInHitZone } = this;
 
     const y = this.timeToY(note.assignedTime);
     const stringOffset = this.guitarWidth / this.buttons.length;
+
+    if (y <= canvas.height && y >= hitZoneY) {
+      notesInHitZone.push(note);
+    }
 
     ctx.strokeStyle = base100Colour;
     ctx.lineCap = "round";
@@ -194,6 +200,9 @@ export class CanvasGuitar {
       return;
     }
 
+    const hitZoneY = this.getHitZoneLimitY();
+    this.notesInHitZone = [];
+
     for (const playEvent of chartTrack) {
       const eventEnd =
         playEvent.type === "note"
@@ -205,20 +214,23 @@ export class CanvasGuitar {
         break;
       }
 
-      if (playEvent.type === "note") {
-        this.drawNote(playEvent);
+      if (playEvent.type === "note" && !this.hitNotes.has(playEvent)) {
+        this.drawNote(playEvent, hitZoneY);
       }
     }
   }
 
-  private getHitZoneLimit(): number {
-    return this.canvas.height - this.buttonRadius * 2;
+  private getHitZoneLimitY(): number {
+    return this.canvas.height - this.buttonRadius * 3;
+  }
+
+  getNotesInHitArea(): NoteEvent[] {
+    return [...this.notesInHitZone];
   }
 
   private drawDebug(): void {
     const { ctx, chart, tick, endTick, time } = this;
     const w = this.canvas.width;
-    const h = this.canvas.height;
 
     ctx.font = "30px monospace";
     ctx.fillStyle = "white";
@@ -248,11 +260,20 @@ export class CanvasGuitar {
     ctx.textAlign = "center";
     ctx.setLineDash([w / 100, w / 50]);
     ctx.beginPath();
-    const hitZoneY = this.getHitZoneLimit();
+    const hitZoneY = this.getHitZoneLimitY();
     ctx.moveTo(0, hitZoneY);
     ctx.lineTo(w, hitZoneY);
     ctx.stroke();
     ctx.fillText(`${time.toFixed(2)}s - ${tick}t`, w / 2, hitZoneY + 28);
+  }
+
+  // TODO add some way of hitting duration notes and changing their color whilst in that state
+  hitNote(note: NoteEvent): void {
+    this.hitNotes.add(note);
+  }
+
+  clearHitNotes(): void {
+    this.hitNotes.clear();
   }
 
   private drawBeatLines(): void {
@@ -268,7 +289,7 @@ export class CanvasGuitar {
 
     let t = startTick;
     let lineIndex = 0;
-    let ts = findLastTickEvent(startTick, timeSignatures);
+    let ts = timeSignatures[findLastTickEvent(startTick, timeSignatures)];
     let beatsPerBar = ts.numerator / ts.denominator / 0.25;
 
     while (t <= this.endTick) {
@@ -292,7 +313,7 @@ export class CanvasGuitar {
         ctx.stroke();
       }
 
-      ts = findLastTickEvent(t, timeSignatures);
+      ts = timeSignatures[findLastTickEvent(t, timeSignatures)];
       const newBeatsPerBar = ts.numerator / ts.denominator / 0.25;
       if (newBeatsPerBar !== beatsPerBar) {
         lineIndex = 0;
