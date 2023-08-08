@@ -17,13 +17,13 @@ const base100Colour = browser
   : "black";
 
 export class CanvasGuitar {
-  private readonly speed: number = 900;
+  private readonly speed: number = 1800;
 
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private readonly parent: HTMLElement;
   private readonly resizeObserver: ResizeObserver;
-  private readonly hitNotes: Set<NoteEvent> = new Set();
+  private readonly zappedNotes: Set<NoteEvent> = new Set();
 
   private track: ChartTrack | undefined;
   private time: number = 0;
@@ -55,6 +55,11 @@ export class CanvasGuitar {
 
   setTrack(track?: ChartTrack): void {
     this.track = track;
+  }
+
+  isOnComboWith(lastHitNoteTick: number): boolean {
+    const hopoThreshold = (65 / 192) * this.chart.Song.resolution;
+    return lastHitNoteTick - hopoThreshold <= this.tick;
   }
 
   private updateSize(): void {
@@ -194,7 +199,7 @@ export class CanvasGuitar {
   }
 
   private drawTrack(): void {
-    const { chart, track, tick, endTick } = this;
+    const { chart, track, tick, endTick, zappedNotes: hitNotes } = this;
     const chartTrack = track ? chart[track] : undefined;
     if (!chartTrack) {
       return;
@@ -214,14 +219,14 @@ export class CanvasGuitar {
         break;
       }
 
-      if (playEvent.type === "note" && !this.hitNotes.has(playEvent)) {
+      if (playEvent.type === "note" && !hitNotes.has(playEvent)) {
         this.drawNote(playEvent, hitZoneY);
       }
     }
   }
 
   private getHitZoneLimitY(): number {
-    return this.canvas.height - this.buttonRadius * 3;
+    return this.canvas.height - this.buttonRadius * 2;
   }
 
   getNotesInHitArea(): NoteEvent[] {
@@ -268,12 +273,12 @@ export class CanvasGuitar {
   }
 
   // TODO add some way of hitting duration notes and changing their color whilst in that state
-  hitNote(note: NoteEvent): void {
-    this.hitNotes.add(note);
+  zapNote(note: NoteEvent): void {
+    this.zappedNotes.add(note);
   }
 
-  clearHitNotes(): void {
-    this.hitNotes.clear();
+  clearZappedNotes(): void {
+    this.zappedNotes.clear();
   }
 
   private drawBeatLines(): void {
