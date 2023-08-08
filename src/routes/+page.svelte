@@ -17,7 +17,12 @@
     activeSongPoint = 0;
   });
 
-  onMount(async () => {
+  function onGamepadConnected(ev: GamepadEvent): void {
+    // TODO gamepad input handling
+    console.log(ev);
+  }
+
+  async function loadDebugSong(): Promise<void> {
     activeSong.set("loading");
     const testUrl = new URL("/mr-brightside.7z", import.meta.url).toString();
     try {
@@ -26,6 +31,15 @@
     } catch (e) {
       activeSong.set(undefined);
     }
+  }
+
+  onMount(() => {
+    window.addEventListener("gamepadconnected", onGamepadConnected);
+    loadDebugSong();
+
+    return () => {
+      window.removeEventListener("gamepadconnected", onGamepadConnected);
+    };
   });
 </script>
 
