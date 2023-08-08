@@ -5,13 +5,8 @@ import type {
   ParsedChart,
   Timed,
 } from "$lib/chart-parser";
-import {
-  disToTime,
-  findLastTickEvent,
-  tickToTime,
-  timeToTick,
-} from "$lib/chart-utils";
-import { getNoteX, type ButtonDef } from "./guitar-utils";
+import { findLastTickEvent, tickToTime, timeToTick } from "$lib/chart-utils";
+import { getNoteX, type FretButtonDef } from "./guitar-utils";
 
 const hopoColour = "#F8EFDD";
 const openNoteColour = "#76448A";
@@ -42,7 +37,7 @@ export class CanvasGuitar {
     parent: HTMLElement,
     private readonly chart: ParsedChart,
     private readonly guitarWidth: number,
-    private readonly buttons: ButtonDef[],
+    private readonly buttons: FretButtonDef[],
     private readonly buttonRadius: number,
     track?: ChartTrack
   ) {

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { activeSong, keyMap } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
-  import { getNoteX, type Button, buttonDefs } from "$lib/guitar-utils";
+  import { getNoteX, type FretButton, buttonDefs } from "$lib/guitar-utils";
   import { onMount } from "svelte";
   import type { NoteEvent } from "$lib/chart-parser";
   import isEqual from "lodash/isEqual";
@@ -15,7 +15,7 @@
   let canStrum: boolean = true;
   let lastHitNoteTick: number = -Infinity;
 
-  let buttons: Button[] = buttonDefs.map((b) => ({ ...b, isDown: false }));
+  let buttons: FretButton[] = buttonDefs.map((b) => ({ ...b, isDown: false }));
 
   activeSong.subscribe(() => {
     guitar?.clearZappedNotes();
@@ -122,6 +122,7 @@
   }
   $: if (guitar) {
     guitar.update(activeSongPoint);
+    // TODO do hit evaluation here instead of in the event handler
   }
 </script>
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import ControlsMenu from "./ControlsMenu.svelte";
   import Settings from "./Settings.svelte";
   import SongSelector from "./song-selector/SongSelector.svelte";
 
@@ -16,7 +17,7 @@
     {
       icon: "ph-game-controller",
       title: "Controls Settings",
-      component: undefined,
+      component: ControlsMenu,
     },
   ] as const;
 
