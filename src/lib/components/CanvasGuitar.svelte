@@ -1,8 +1,10 @@
 <script lang="ts">
   import { activeSong, keyMap } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
-  import { getNoteX, type Button } from "$lib/guitar-utils";
+  import { getNoteX, type Button, buttonDefs } from "$lib/guitar-utils";
   import { onMount } from "svelte";
+  import type { NoteEvent } from "$lib/chart-parser";
+  import isEqual from "lodash/isEqual";
 
   export let activeSongPoint: number;
   export let guitarWidth = 700;
@@ -12,48 +14,69 @@
   let guitar: CanvasGuitar | undefined;
   let guitarContainer: HTMLDivElement;
   let canStrum: boolean = true;
+  let lastHitNoteTick: number = -Infinity;
 
-  let buttons: Button[] = [
-    {
-      color: "rgb(35,155,86)",
-      isDown: false,
-    },
-    {
-      color: "rgb(231,76,60)",
-      isDown: false,
-    },
-    {
-      color: "rgb(244,208,63)",
-      isDown: false,
-    },
-    {
-      color: "rgb(52,152,219)",
-      isDown: false,
-    },
-    {
-      color: "rgb(220,118,51)",
-      isDown: false,
-    },
-  ];
+  let buttons: Button[] = buttonDefs.map((b) => ({ ...b, isDown: false }));
 
   activeSong.subscribe(() => {
-    guitar?.clearHitNotes();
+    guitar?.clearZappedNotes();
   });
 
-  function strum(): void {
-    canStrum = false;
-    console.log("strum", guitar!.getNotesInHitArea());
-    // TODO organise hit notes into tick groups and decide what to hit
-    // the rules may get complicated with HOPOs
+  function canTap(note: NoteEvent): boolean {
+    return note.tap || (note.isHOPO && guitar!.isOnComboWith(lastHitNoteTick));
+  }
+
+  function getFirstChordInHitArea(): (NoteEvent | undefined)[] | null {
+    const notes = guitar!.getNotesInHitArea();
+    if (notes.length === 0) {
+      return null;
+    }
+
+    const result: NoteEvent[] = new Array(buttons.length).fill(undefined);
+    for (const note of notes) {
+      if (note.tick !== notes[0].tick) {
+        break;
+      }
+
+      result[note.note] = note;
+    }
+
+    return result;
+  }
+
+  function strum(isTap: boolean): void {
+    if (!isTap) {
+      canStrum = false;
+    }
+    const chord = getFirstChordInHitArea();
+    if (chord === null) {
+      return;
+    }
+    console.log(isTap ? "tap" : "strum", chord);
+
+    const buttonState = buttons.map((b) => b.isDown);
+    const chordRequiredButtonState = chord.map((note) => note !== undefined);
+    if (
+      isEqual(buttonState, chordRequiredButtonState) &&
+      (!isTap || chord.every((note) => note === undefined || canTap(note)))
+    ) {
+      for (const note of chord) {
+        if (note) {
+          lastHitNoteTick = note.tick;
+          guitar!.zapNote(note);
+        }
+      }
+    }
   }
 
   function keyDown(e: KeyboardEvent) {
     const action = $keyMap[e.key];
     if (action !== undefined && guitar) {
       if (action === "strum" && canStrum) {
-        strum();
+        strum(false);
       } else if (typeof action === "number") {
         buttons[action].isDown = true;
+        strum(true);
       }
     }
   }
@@ -65,6 +88,7 @@
         canStrum = true;
       } else if (typeof action === "number") {
         buttons[action].isDown = false;
+        strum(true);
       }
     }
   }
@@ -89,10 +113,10 @@
         guitarContainer,
         $activeSong.chart,
         guitarWidth,
-        buttons,
+        buttonDefs,
         buttonRadius,
         buttonOffset,
-        "ExpertSingle"
+        "MediumSingle"
       );
     } else {
       guitar = undefined;
