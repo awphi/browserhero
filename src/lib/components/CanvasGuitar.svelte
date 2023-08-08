@@ -9,7 +9,6 @@
   export let activeSongPoint: number;
   export let guitarWidth = 700;
   export let buttonRadius = 60;
-  export let buttonOffset = 20;
 
   let guitar: CanvasGuitar | undefined;
   let guitarContainer: HTMLDivElement;
@@ -115,7 +114,6 @@
         guitarWidth,
         buttonDefs,
         buttonRadius,
-        buttonOffset,
         "MediumSingle"
       );
     } else {
@@ -143,11 +141,7 @@
     class="absolute z-20 -left-1 -top-1"
   />
 
-  <div
-    style="height: calc(100% - {buttonRadius}px - {buttonOffset}px);"
-    class="absolute w-full"
-    bind:this={guitarContainer}
-  />
+  <div class="absolute w-full h-full" bind:this={guitarContainer} />
 
   {#each buttons as button, i}
     <div
@@ -156,7 +150,7 @@
         i,
         guitarWidth / buttons.length
       )}px; width: {buttonRadius *
-        2}px; background-color: {button.color}; bottom: {buttonOffset}px;"
+        2}px; background-color: {button.color}; bottom: {buttonRadius}px;"
     >
       <div class="button-center button-center-lower" />
       <div
