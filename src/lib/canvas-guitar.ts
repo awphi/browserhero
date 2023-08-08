@@ -5,7 +5,12 @@ import type {
   ParsedChart,
   Timed,
 } from "$lib/chart-parser";
-import { findLastTickEvent, tickToTime, timeToTick } from "$lib/chart-utils";
+import {
+  disToTime,
+  findLastTickEvent,
+  tickToTime,
+  timeToTick,
+} from "$lib/chart-utils";
 import { getNoteX, type ButtonDef } from "./guitar-utils";
 
 const hopoColour = "#F8EFDD";
@@ -17,7 +22,7 @@ const base100Colour = browser
   : "black";
 
 export class CanvasGuitar {
-  private readonly speed: number = 1800;
+  private readonly speed: number = 1600;
 
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
@@ -29,6 +34,8 @@ export class CanvasGuitar {
   private time: number = 0;
   private tick: number = 0;
   private endTick: number = 0;
+  // how many ticks beyond the extents of the canvas should we draw notes to ensure partially obscured notes are still drawn
+  private noteDrawMargin: number = 0;
   private notesInHitZone: NoteEvent[] = [];
 
   constructor(
@@ -37,7 +44,6 @@ export class CanvasGuitar {
     private readonly guitarWidth: number,
     private readonly buttons: ButtonDef[],
     private readonly buttonRadius: number,
-    private readonly buttonOffset: number,
     track?: ChartTrack
   ) {
     this.parent = parent;
@@ -79,6 +85,12 @@ export class CanvasGuitar {
     this.time = seconds;
     this.tick = this.timeToTick(seconds);
     this.endTick = this.yToTick(0);
+    // this calculate may not be necessary every update
+    // - could maybe compute a static value for the chart based on its highest bpm and its resolution
+    this.noteDrawMargin = Math.max(
+      this.yToTick(-this.buttonRadius, false) - this.endTick,
+      this.yToTick(this.canvas.height + this.buttonRadius, false) - this.tick
+    );
     requestAnimationFrame(this.draw.bind(this));
   }
 
@@ -104,16 +116,21 @@ export class CanvasGuitar {
 
   timeToY(time: number): number {
     const hmod = this.canvas.height / devicePixelRatio;
-    return hmod - time * this.speed + this.time * this.speed;
+    // nudge everything up by the offset of our buttons (the circumference of a button)
+    return (
+      hmod - time * this.speed + this.time * this.speed - this.buttonRadius * 2
+    );
   }
 
-  yToTime(y: number): number {
+  yToTime(y: number, adjust: boolean = true): number {
     const hmod = this.canvas.height / devicePixelRatio;
-    return hmod / this.speed + this.time - y / this.speed;
+    // adjust down by the offset of our buttons - the gap under the buttons should represent time in the past
+    const adjustedY = adjust ? y + this.buttonRadius * 2 : y;
+    return hmod / this.speed + this.time - adjustedY / this.speed;
   }
 
-  yToTick(y: number): number {
-    return this.timeToTick(this.yToTime(y));
+  yToTick(y: number, adjust: boolean = true): number {
+    return this.timeToTick(this.yToTime(y, adjust));
   }
 
   private draw() {
@@ -199,7 +216,7 @@ export class CanvasGuitar {
   }
 
   private drawTrack(): void {
-    const { chart, track, tick, endTick, zappedNotes: hitNotes } = this;
+    const { chart, track, tick, endTick, zappedNotes, noteDrawMargin } = this;
     const chartTrack = track ? chart[track] : undefined;
     if (!chartTrack) {
       return;
@@ -213,20 +230,20 @@ export class CanvasGuitar {
         playEvent.type === "note"
           ? playEvent.tick + playEvent.duration
           : playEvent.tick;
-      if (eventEnd < tick) {
+      if (eventEnd < tick - noteDrawMargin) {
         continue;
-      } else if (playEvent.tick > endTick) {
+      } else if (playEvent.tick > endTick + noteDrawMargin) {
         break;
       }
 
-      if (playEvent.type === "note" && !hitNotes.has(playEvent)) {
+      if (playEvent.type === "note" && !zappedNotes.has(playEvent)) {
         this.drawNote(playEvent, hitZoneY);
       }
     }
   }
 
   private getHitZoneLimitY(): number {
-    return this.canvas.height - this.buttonRadius * 2;
+    return this.canvas.height - this.buttonRadius * 4;
   }
 
   getNotesInHitArea(): NoteEvent[] {
