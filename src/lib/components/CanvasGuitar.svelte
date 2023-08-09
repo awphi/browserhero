@@ -1,32 +1,32 @@
 <script lang="ts">
-  import { activeSong, keyMap } from "../stores";
+  import { activeSong } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
   import { getNoteX, type FretButton, buttonDefs } from "$lib/guitar-utils";
   import { onMount } from "svelte";
   import type { NoteEvent } from "$lib/chart-parser";
   import isEqual from "lodash/isEqual";
+  import { InputManager, type Action } from "$lib/input-manager";
 
   export let activeSongPoint: number;
   export let guitarWidth = 700;
   export let buttonRadius = 60;
 
-  let guitar: CanvasGuitar | undefined;
+  let guitar: CanvasGuitar;
+  let inputManager: InputManager;
   let guitarContainer: HTMLDivElement;
-  let canStrum: boolean = true;
   let lastHitNoteTick: number = -Infinity;
 
-  let buttons: FretButton[] = buttonDefs.map((b) => ({ ...b, isDown: false }));
-
-  activeSong.subscribe(() => {
-    guitar?.clearZappedNotes();
-  });
+  const buttons: FretButton[] = buttonDefs.map((b) => ({
+    ...b,
+    isDown: false,
+  }));
 
   function canTap(note: NoteEvent): boolean {
-    return note.tap || (note.isHOPO && guitar!.isOnComboWith(lastHitNoteTick));
+    return note.tap || (note.isHOPO && guitar.isOnComboWith(lastHitNoteTick));
   }
 
   function getFirstChordInHitArea(): (NoteEvent | undefined)[] | null {
-    const notes = guitar!.getNotesInHitArea();
+    const notes = guitar.getNotesInHitArea();
     if (notes.length === 0) {
       return null;
     }
@@ -43,10 +43,7 @@
     return result;
   }
 
-  function strum(isTap: boolean): void {
-    if (!isTap) {
-      canStrum = false;
-    }
+  function hitNotes(isTap: boolean): void {
     const chord = getFirstChordInHitArea();
     if (chord === null) {
       return;
@@ -62,67 +59,62 @@
       for (const note of chord) {
         if (note) {
           lastHitNoteTick = note.tick;
-          guitar!.zapNote(note);
+          guitar.zapNote(note);
         }
       }
     }
   }
 
-  function keyDown(e: KeyboardEvent) {
-    const action = $keyMap[e.key];
-    if (action !== undefined && guitar) {
-      if (action === "strum" && canStrum) {
-        strum(false);
-      } else if (typeof action === "number") {
-        buttons[action].isDown = true;
-        strum(true);
-      }
-    }
-  }
-
-  function keyUp(e: KeyboardEvent) {
-    const action = $keyMap[e.key];
-    if (action !== undefined && guitar) {
-      if (action === "strum") {
-        canStrum = true;
-      } else if (typeof action === "number") {
-        buttons[action].isDown = false;
-        strum(true);
-      }
-    }
-  }
-
   onMount(() => {
-    window.addEventListener("keydown", keyDown);
-    window.addEventListener("keyup", keyUp);
+    inputManager = new InputManager();
+    guitar = new CanvasGuitar(
+      guitarContainer,
+      guitarWidth,
+      buttonDefs,
+      buttonRadius,
+      "MediumSingle"
+    );
 
     return () => {
-      window.removeEventListener("keyup", keyUp);
-      window.removeEventListener("keydown", keyDown);
+      guitar.destroy();
+      inputManager.destroy();
     };
   });
 
-  $: {
-    if (guitar) {
-      guitar.destroy();
-    }
+  $: if (activeSongPoint === 0 && guitar) {
+    guitar.clearZappedNotes();
+  }
 
+  $: {
     if (typeof $activeSong === "object" && guitarContainer) {
-      guitar = new CanvasGuitar(
-        guitarContainer,
-        $activeSong.chart,
-        guitarWidth,
-        buttonDefs,
-        buttonRadius,
-        "MediumSingle"
-      );
-    } else {
-      guitar = undefined;
+      guitar.setChart($activeSong.chart);
     }
   }
+
   $: if (guitar) {
     guitar.update(activeSongPoint);
-    // TODO do hit evaluation here instead of in the event handler
+    inputManager.update();
+
+    let shouldTap = false;
+    for (let i = 0; i < buttons.length; i++) {
+      const action = i.toString() as Action;
+      const wasDown = buttons[i].isDown;
+      const shouldBeDown = inputManager.getActionState(action) !== "inactive";
+      if (shouldBeDown !== wasDown) {
+        buttons[i].isDown = shouldBeDown;
+        shouldTap = true;
+      }
+    }
+
+    const shouldStrum =
+      inputManager.getActionState("strum-down") === "pressed" ||
+      inputManager.getActionState("strum-up") === "pressed";
+
+    // if we should tap or strum then we should check if we hit the correct chord
+    if (shouldStrum || shouldTap) {
+      // we only count the input as a tap if we didn't press strum on this same input tick
+      hitNotes(!shouldStrum && shouldTap);
+    }
   }
 </script>
 

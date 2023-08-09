@@ -25,6 +25,7 @@ export class CanvasGuitar {
   private readonly resizeObserver: ResizeObserver;
   private readonly zappedNotes: Set<NoteEvent> = new Set();
 
+  private chart: ParsedChart | undefined;
   private track: ChartTrack | undefined;
   private time: number = 0;
   private tick: number = 0;
@@ -35,7 +36,6 @@ export class CanvasGuitar {
 
   constructor(
     parent: HTMLElement,
-    private readonly chart: ParsedChart,
     private readonly guitarWidth: number,
     private readonly buttons: FretButtonDef[],
     private readonly buttonRadius: number,
@@ -46,7 +46,6 @@ export class CanvasGuitar {
     this.canvas.style.width = "100%";
     this.canvas.style.height = "100%";
     this.ctx = this.canvas.getContext("2d")!;
-    this.chart = chart;
     this.resizeObserver = new ResizeObserver(this.updateSize.bind(this));
     this.resizeObserver.observe(this.parent);
     this.setTrack(track);
@@ -54,12 +53,18 @@ export class CanvasGuitar {
     this.updateSize();
   }
 
+  setChart(chart?: ParsedChart): void {
+    this.chart = chart;
+    this.update(this.time);
+  }
+
   setTrack(track?: ChartTrack): void {
     this.track = track;
+    this.update(this.time);
   }
 
   isOnComboWith(lastHitNoteTick: number): boolean {
-    const hopoThreshold = (65 / 192) * this.chart.Song.resolution;
+    const hopoThreshold = (65 / 192) * this.chart!.Song.resolution;
     return lastHitNoteTick - hopoThreshold <= this.tick;
   }
 
@@ -90,6 +95,10 @@ export class CanvasGuitar {
   }
 
   timeToTick(seconds: number): number {
+    if (!this.chart) {
+      return 0;
+    }
+
     return timeToTick(
       seconds,
       this.chart.Song.resolution,
@@ -98,6 +107,10 @@ export class CanvasGuitar {
   }
 
   tickToTime(tick: number): number {
+    if (!this.chart) {
+      return 0;
+    }
+
     return tickToTime(
       tick,
       this.chart.Song.resolution,
@@ -212,7 +225,7 @@ export class CanvasGuitar {
 
   private drawTrack(): void {
     const { chart, track, tick, endTick, zappedNotes, noteDrawMargin } = this;
-    const chartTrack = track ? chart[track] : undefined;
+    const chartTrack = track && chart ? chart[track] : undefined;
     if (!chartTrack) {
       return;
     }
@@ -247,6 +260,10 @@ export class CanvasGuitar {
 
   private drawDebug(): void {
     const { ctx, chart, tick, endTick, time } = this;
+    if (!chart) {
+      return;
+    }
+
     const w = this.canvas.width;
 
     ctx.font = "30px monospace";
@@ -295,6 +312,11 @@ export class CanvasGuitar {
 
   private drawBeatLines(): void {
     const { ctx, canvas, chart } = this;
+
+    if (!chart) {
+      return;
+    }
+
     const w = canvas.width;
     const h = canvas.height;
     const res = chart.Song.resolution;
