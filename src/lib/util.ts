@@ -1,7 +1,5 @@
 import invert from "lodash/invert";
 
-export type KeyMap = Record<string, number | "strum">;
-
 const mimeTypeToExtensions: Record<string, string> = {
   "application/rar": "rar",
   "application/x-rar-compressed": "rar",
