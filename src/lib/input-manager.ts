@@ -30,10 +30,6 @@ const baseActionStateMap: ActionStateMap = {
   "4": "inactive",
 };
 
-function getGamepadId(gamepad: Gamepad): string {
-  return gamepad.id + gamepad.index;
-}
-
 export class InputManager {
   private readonly keyMaps: Record<string, ActionMap>;
   private readonly actionStateMaps: Record<string, ActionStateMap>;
@@ -105,12 +101,12 @@ export class InputManager {
     // note that we don't set up a default action map - we expect that to be passed in externally since there's
     // so many different controllers. action maps can be set in the constructor or via setActionMap
     console.log(gamepad, "connect");
-    this.actionStateMaps[getGamepadId(gamepad)] = { ...baseActionStateMap };
+    this.actionStateMaps[gamepad.index.toString()] = { ...baseActionStateMap };
   }
 
   private onGamepadDisconnected({ gamepad }: GamepadEvent): void {
     console.log(gamepad, "disconnect");
-    delete this.actionStateMaps[getGamepadId(gamepad)];
+    delete this.actionStateMaps[gamepad.index.toString()];
   }
 
   destroy(): void {
@@ -139,9 +135,10 @@ export class InputManager {
         continue;
       }
 
-      const gamepadId = getGamepadId(gamepad);
-      const keyMap = this.keyMaps[gamepadId];
-      const actionStateMap = this.actionStateMaps[gamepadId];
+      const gamepadIndex = gamepad.index.toString();
+      // key maps are tied to the name of the controller whereas action state is tied to the individual device
+      const keyMap = this.keyMaps[gamepad.id];
+      const actionStateMap = this.actionStateMaps[gamepadIndex];
       if (!keyMap || !actionStateMap) {
         continue;
       }
@@ -151,12 +148,10 @@ export class InputManager {
         const action = keyMap[btnId];
         if (action) {
           const currentState = actionStateMap[action];
-          const nextState = btn.pressed
-            ? currentState === "inactive"
-              ? "pressed"
-              : "held"
-            : "inactive";
-          this.setActionState(gamepadId, action, nextState);
+          const nextPressedState =
+            currentState === "inactive" ? "pressed" : "held";
+          const nextState = btn.pressed ? nextPressedState : "inactive";
+          this.setActionState(gamepadIndex, action, nextState);
         }
       }
     }
