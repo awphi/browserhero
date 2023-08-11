@@ -246,7 +246,7 @@ export class CanvasGuitar {
   }
 
   private getHitZoneLimitY(): number {
-    return this.canvas.height - this.buttonRadius * 5;
+    return this.canvas.height / devicePixelRatio - this.buttonRadius * 5;
   }
 
   getNotesInHitArea(): NoteEvent[] {
@@ -259,7 +259,7 @@ export class CanvasGuitar {
       return;
     }
 
-    const w = this.canvas.width;
+    const w = this.canvas.width / devicePixelRatio;
 
     ctx.font = "30px monospace";
     ctx.fillStyle = "white";
@@ -312,8 +312,8 @@ export class CanvasGuitar {
       return;
     }
 
-    const w = canvas.width;
-    const h = canvas.height;
+    const w = canvas.width / devicePixelRatio;
+    const h = canvas.height / devicePixelRatio;
     const res = chart.Song.resolution;
     const startTick = 0;
     const { timeSignatures } = chart.SyncTrack;
