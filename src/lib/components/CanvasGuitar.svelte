@@ -99,7 +99,7 @@
     for (let i = 0; i < buttons.length; i++) {
       const action = i.toString() as Action;
       const wasDown = buttons[i].isDown;
-      const shouldBeDown = inputManager.getActionState(action) !== "inactive";
+      const shouldBeDown = inputManager.getButtonState(action) !== "inactive";
       if (shouldBeDown !== wasDown) {
         buttons[i].isDown = shouldBeDown;
         shouldTap = true;
@@ -107,8 +107,8 @@
     }
 
     const shouldStrum =
-      inputManager.getActionState("strum-down") === "pressed" ||
-      inputManager.getActionState("strum-up") === "pressed";
+      inputManager.getButtonState("strum-down") === "pressed" ||
+      inputManager.getButtonState("strum-up") === "pressed";
 
     // if we should tap or strum then we should check if we hit the correct chord
     if (shouldStrum || shouldTap) {
