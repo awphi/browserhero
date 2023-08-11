@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeSong } from "../stores";
+  import { activeSong, activeScore } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
   import { getNoteX, type FretButton, buttonDefs } from "$lib/guitar-utils";
   import { onMount } from "svelte";
@@ -14,7 +14,6 @@
   let guitar: CanvasGuitar;
   let inputManager: InputManager;
   let guitarContainer: HTMLDivElement;
-  let comboLength: number = 0;
 
   const buttons: FretButton[] = buttonDefs.map((b) => ({
     ...b,
@@ -22,7 +21,7 @@
   }));
 
   function canTap(note: NoteEvent): boolean {
-    return note.tap || (note.isHOPO && comboLength >= 1);
+    return note.tap || (note.isHOPO && $activeScore.combo >= 1);
   }
 
   function getFirstChordInHitArea(): (NoteEvent | undefined)[] | null {
@@ -56,7 +55,8 @@
       isEqual(buttonState, chordRequiredButtonState) &&
       (!isTap || chord.every((note) => note === undefined || canTap(note)))
     ) {
-      comboLength += 1;
+      // TODO we need to work out when to drop combos
+      $activeScore.combo += 1;
       for (const note of chord) {
         if (note) {
           guitar.zapNote(note);

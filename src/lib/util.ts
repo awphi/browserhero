@@ -41,3 +41,8 @@ export function formatTimespan(secs: number) {
 export function roundNearest(value: number, nearest: number): number {
   return Math.round(value / nearest) * nearest;
 }
+
+export interface ScoreInfo {
+  score: number;
+  combo: number;
+}

@@ -246,7 +246,7 @@ export class CanvasGuitar {
   }
 
   private getHitZoneLimitY(): number {
-    return this.canvas.height / devicePixelRatio - this.buttonRadius * 5;
+    return this.canvas.height / devicePixelRatio - this.buttonRadius * 4.5;
   }
 
   getNotesInHitArea(): NoteEvent[] {
