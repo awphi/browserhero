@@ -1,23 +1,73 @@
-import { list } from "postcss";
+export type ButtonAction =
+  | "strum-up"
+  | "strum-down"
+  | "0"
+  | "1"
+  | "2"
+  | "3"
+  | "4";
+export type AxisAction = "whammy";
 
-export type Action = "strum-up" | "strum-down" | "0" | "1" | "2" | "3" | "4";
-export type ActionMap = Record<string, Action>;
-
-const actionStates = ["inactive", "pressed", "held"] as const;
-type ActionState = (typeof actionStates)[number];
-
-type ActionStateMap = {
-  [k in Action]: ActionState;
+export type AxisToButtonAction = {
+  min: number;
+  max: number;
+  buttonAction: ButtonAction;
+};
+export type ButtonToAxisAction = {
+  axisAction: AxisAction;
+  pressedValue: number;
+  unpressedValue: number;
+};
+export type ActionMap = {
+  buttons: Record<string, ButtonAction | ButtonToAxisAction>;
+  axes: Record<string, AxisAction | AxisToButtonAction[]>;
 };
 
-const defaultKeyboardKeyMap: ActionMap = {
-  "1": "0",
-  "2": "1",
-  "3": "2",
-  "4": "3",
-  "5": "4",
-  ArrowUp: "strum-up",
-  ArrowDown: "strum-down",
+const buttonActionStates = ["inactive", "pressed", "held"] as const;
+type ButtonActionState = (typeof buttonActionStates)[number];
+
+type ActionStateMap = {
+  [k in ButtonAction]: ButtonActionState;
+} & {
+  [k in AxisAction]: number;
+};
+
+const defaultKeyboardMap: ActionMap = {
+  buttons: {
+    "1": "0",
+    "2": "1",
+    "3": "2",
+    "4": "3",
+    "5": "4",
+    ArrowUp: "strum-up",
+    ArrowDown: "strum-down",
+  },
+  axes: {},
+};
+
+const defaultGH4Map: ActionMap = {
+  buttons: {
+    "1": "0",
+    "2": "1",
+    "0": "2",
+    "3": "3",
+    "4": "4",
+  },
+  axes: {
+    "9": [
+      {
+        min: -1.25,
+        max: -0.75,
+        buttonAction: "strum-up",
+      },
+      {
+        max: 0.25,
+        min: -0.25,
+        buttonAction: "strum-down",
+      },
+    ],
+    "2": "whammy",
+  },
 };
 
 const baseActionStateMap: ActionStateMap = {
@@ -28,24 +78,31 @@ const baseActionStateMap: ActionStateMap = {
   "2": "inactive",
   "3": "inactive",
   "4": "inactive",
+  whammy: 0,
 };
 
 export class InputManager {
-  private readonly keyMaps: Record<string, ActionMap>;
+  private readonly actionMaps: Record<string, ActionMap>;
   private readonly actionStateMaps: Record<string, ActionStateMap>;
   private readonly eventListeners: [keyof WindowEventMap, Function][] = [];
 
-  // TODO use constructor parameter + svelte stores + localStorage to make rebindable per-device keymaps
-  constructor(keyMaps?: Record<string, ActionMap>) {
-    if (keyMaps && "keyboard" in keyMaps) {
-      this.keyMaps = keyMaps;
+  // TODO use constructor parameter + svelte stores + localStorage to make rebindable per-device actionmaps
+  constructor(actionMaps?: Record<string, ActionMap>) {
+    if (actionMaps && "keyboard" in actionMaps) {
+      this.actionMaps = actionMaps;
     } else {
-      this.keyMaps = {
-        keyboard: defaultKeyboardKeyMap,
+      this.actionMaps = {
+        keyboard: defaultKeyboardMap,
+        // a default map for a controller we have. worth checking if the key mapping is consistent per controller ID
+        "Guitar Hero4 for PlayStation (R) 3 (Vendor: 12ba Product: 0100)":
+          defaultGH4Map,
       };
     }
     this.actionStateMaps = Object.fromEntries(
-      Object.keys(this.keyMaps).map((key) => [key, { ...baseActionStateMap }])
+      Object.keys(this.actionMaps).map((key) => [
+        key,
+        { ...baseActionStateMap },
+      ])
     );
 
     this.addEventListener("gamepadconnected", this.onGamepadConnected);
@@ -66,34 +123,41 @@ export class InputManager {
 
   private setActionState(
     controllerName: string,
-    action: Action,
-    state: ActionState
+    action: AxisAction | ButtonAction,
+    state: number | ButtonActionState
   ): void {
-    const currentState = this.actionStateMaps["keyboard"][action];
+    const currentState = this.actionStateMaps[controllerName][action];
     if (currentState !== state) {
-      this.actionStateMaps[controllerName][action] = state;
-      console.log(controllerName, action, state);
+      const actionMap = this.actionStateMaps[controllerName];
+      // dangerously case action map to any to avoid TS errors
+      // just be careful not to set an axis action with a button state
+      // or a button action with a number
+      (actionMap as any)[action] = state;
     }
   }
 
   private onKeyUp(ev: KeyboardEvent): void {
-    const keyMap = this.keyMaps["keyboard"];
-    const action = keyMap[ev.key];
-    if (action) {
+    const map = this.actionMaps["keyboard"];
+    const action = map.buttons[ev.key];
+    if (typeof action === "string") {
       this.setActionState("keyboard", action, "inactive");
+    } else if (action) {
+      this.setActionState("keyboard", action.axisAction, action.unpressedValue);
     }
   }
 
   private onKeyDown(ev: KeyboardEvent): void {
-    const keyMap = this.keyMaps["keyboard"];
-    const action = keyMap[ev.key];
-    if (action) {
+    const map = this.actionMaps["keyboard"];
+    const action = map.buttons[ev.key];
+    if (typeof action === "string") {
       const currentState = this.actionStateMaps["keyboard"][action];
       this.setActionState(
         "keyboard",
         action,
         currentState === "inactive" ? "pressed" : "held"
       );
+    } else if (action) {
+      this.setActionState("keyboard", action.axisAction, action.pressedValue);
     }
   }
 
@@ -116,16 +180,23 @@ export class InputManager {
   }
 
   setActionMap(controllerName: string, map: ActionMap): void {
-    this.keyMaps[controllerName] = map;
+    this.actionMaps[controllerName] = map;
   }
 
-  getActionState(action: Action): ActionState | undefined {
+  getButtonState(action: ButtonAction): ButtonActionState | undefined {
     const prioInput = Math.max(
       ...Object.values(this.actionStateMaps).map((v) =>
-        actionStates.indexOf(v[action])
+        buttonActionStates.indexOf(v[action])
       )
     );
-    return actionStates[prioInput];
+    return buttonActionStates[prioInput];
+  }
+
+  getAxisState(action: AxisAction): number | undefined {
+    const prioInput = Math.max(
+      ...Object.values(this.actionStateMaps).map((v) => v[action])
+    );
+    return prioInput;
   }
 
   update(): void {
@@ -136,22 +207,45 @@ export class InputManager {
       }
 
       const gamepadIndex = gamepad.index.toString();
-      // key maps are tied to the name of the controller whereas action state is tied to the individual device
-      const keyMap = this.keyMaps[gamepad.id];
+      // action maps are tied to the name of the controller whereas action state is tied to the individual device
+      const map = this.actionMaps[gamepad.id];
       const actionStateMap = this.actionStateMaps[gamepadIndex];
-      if (!keyMap || !actionStateMap) {
+      if (!map || !actionStateMap) {
         continue;
       }
 
       for (const [index, btn] of gamepad.buttons.entries()) {
         const btnId = index.toString();
-        const action = keyMap[btnId];
-        if (action) {
+        const action = map.buttons[btnId];
+        if (typeof action === "string") {
           const currentState = actionStateMap[action];
           const nextPressedState =
             currentState === "inactive" ? "pressed" : "held";
           const nextState = btn.pressed ? nextPressedState : "inactive";
           this.setActionState(gamepadIndex, action, nextState);
+        } else if (action) {
+          const value = btn.pressed
+            ? action.pressedValue
+            : action.unpressedValue;
+          this.setActionState(gamepadIndex, action.axisAction, value);
+        }
+      }
+
+      // TODO test all this works
+      for (const [index, axis] of gamepad.axes.entries()) {
+        const btnId = index.toString();
+        const action = map.axes[btnId];
+        if (Array.isArray(action)) {
+          for (const act of action) {
+            const pressed = axis > act.min && axis < act.max;
+            const currentState = actionStateMap[act.buttonAction];
+            const nextPressedState =
+              currentState === "inactive" ? "pressed" : "held";
+            const nextState = pressed ? nextPressedState : "inactive";
+            this.setActionState(gamepadIndex, act.buttonAction, nextState);
+          }
+        } else if (action) {
+          this.setActionState(gamepadIndex, action, axis);
         }
       }
     }
