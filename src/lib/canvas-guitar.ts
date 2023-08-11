@@ -63,11 +63,6 @@ export class CanvasGuitar {
     this.update(this.time);
   }
 
-  isOnComboWith(lastHitNoteTick: number): boolean {
-    const hopoThreshold = (65 / 192) * this.chart!.Song.resolution;
-    return lastHitNoteTick - hopoThreshold <= this.tick;
-  }
-
   private updateSize(): void {
     const { canvas, ctx } = this;
     const { width, height } = window.getComputedStyle(canvas);
@@ -251,7 +246,7 @@ export class CanvasGuitar {
   }
 
   private getHitZoneLimitY(): number {
-    return this.canvas.height - this.buttonRadius * 4;
+    return this.canvas.height - this.buttonRadius * 5;
   }
 
   getNotesInHitArea(): NoteEvent[] {

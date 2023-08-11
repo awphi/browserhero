@@ -5,7 +5,7 @@
   import { onMount } from "svelte";
   import type { NoteEvent } from "$lib/chart-parser";
   import isEqual from "lodash/isEqual";
-  import { InputManager, type Action } from "$lib/input-manager";
+  import { InputManager, type ButtonAction } from "$lib/input-manager";
 
   export let activeSongPoint: number;
   export let guitarWidth = 700;
@@ -14,7 +14,7 @@
   let guitar: CanvasGuitar;
   let inputManager: InputManager;
   let guitarContainer: HTMLDivElement;
-  let lastHitNoteTick: number = -Infinity;
+  let comboLength: number = 0;
 
   const buttons: FretButton[] = buttonDefs.map((b) => ({
     ...b,
@@ -22,7 +22,7 @@
   }));
 
   function canTap(note: NoteEvent): boolean {
-    return note.tap || (note.isHOPO && guitar.isOnComboWith(lastHitNoteTick));
+    return note.tap || (note.isHOPO && comboLength >= 1);
   }
 
   function getFirstChordInHitArea(): (NoteEvent | undefined)[] | null {
@@ -56,9 +56,9 @@
       isEqual(buttonState, chordRequiredButtonState) &&
       (!isTap || chord.every((note) => note === undefined || canTap(note)))
     ) {
+      comboLength += 1;
       for (const note of chord) {
         if (note) {
-          lastHitNoteTick = note.tick;
           guitar.zapNote(note);
         }
       }
@@ -97,7 +97,7 @@
 
     let shouldTap = false;
     for (let i = 0; i < buttons.length; i++) {
-      const action = i.toString() as Action;
+      const action = i.toString() as ButtonAction;
       const wasDown = buttons[i].isDown;
       const shouldBeDown = inputManager.getButtonState(action) !== "inactive";
       if (shouldBeDown !== wasDown) {
@@ -170,6 +170,7 @@
   .pressed {
     box-shadow: rgba(0, 0, 0, 0.5) 0px 0px 0px;
     transform: translateY(0px);
+    @apply bg-base-300;
   }
 
   .button {
