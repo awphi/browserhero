@@ -8,6 +8,7 @@
   import CanvasGuitar from "$lib/components/CanvasGuitar.svelte";
   import ThreeGuitar from "$lib/components/ThreeGuitar.svelte";
   import AudioTrack from "$lib/components/AudioTrack.svelte";
+  import ScoreDisplay from "$lib/components/ScoreDisplay.svelte";
 
   let activeSongPoint = 0;
   let paused = true;
@@ -46,18 +47,27 @@
   <Menu class="absolute left-0 top-2 z-10" />
   <div class="flex w-full h-full items-center justify-center">
     <CanvasGuitar {activeSongPoint} />
+    <div class="score-display-container">
+      <ScoreDisplay />
+    </div>
+
     <!--<ThreeGuitar {activeSongPoint} /> -->
   </div>
-  {#if typeof $activeSong === "object"}
-    <SongMetaDisplay
-      song={$activeSong}
-      bind:activeSongPoint
-      class="absolute top-2 right-2"
-    />
-    <AudioTrack
-      song={$activeSong}
-      bind:currentTime={activeSongPoint}
-      bind:paused
-    />
-  {/if}
+  <div class="absolute top-2 right-2">
+    {#if typeof $activeSong === "object"}
+      <SongMetaDisplay song={$activeSong} bind:activeSongPoint />
+      <AudioTrack
+        song={$activeSong}
+        bind:currentTime={activeSongPoint}
+        bind:paused
+      />
+    {/if}
+  </div>
 </div>
+
+<style>
+  .score-display-container {
+    left: calc(50% + 400px);
+    @apply absolute bottom-[150px];
+  }
+</style>

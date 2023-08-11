@@ -164,12 +164,10 @@ export class InputManager {
   private onGamepadConnected({ gamepad }: GamepadEvent): void {
     // note that we don't set up a default action map - we expect that to be passed in externally since there's
     // so many different controllers. action maps can be set in the constructor or via setActionMap
-    console.log(gamepad, "connect");
     this.actionStateMaps[gamepad.index.toString()] = { ...baseActionStateMap };
   }
 
   private onGamepadDisconnected({ gamepad }: GamepadEvent): void {
-    console.log(gamepad, "disconnect");
     delete this.actionStateMaps[gamepad.index.toString()];
   }
 

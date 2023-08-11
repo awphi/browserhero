@@ -6,7 +6,6 @@
   export let activeSongPoint: number;
   export let song: SongBundle;
 
-  let clazz: string = "";
   let songLengthSeconds: number = 0;
 
   let albumCover: string = "";
@@ -23,7 +22,7 @@
 </script>
 
 <div
-  class={`${clazz}  outline-1 outline outline-base-100 bg-neutral px-2 py-1 rounded-md w-80`}
+  class="outline-1 outline outline-base-100 bg-neutral px-2 py-1 rounded-md w-80"
 >
   <h1 class="text-primary-content text-2xl font-bold">
     {song.ini.name}
