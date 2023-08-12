@@ -14,6 +14,7 @@
   let guitar: CanvasGuitar;
   let inputManager: InputManager;
   let guitarContainer: HTMLDivElement;
+  let lastNotesInHitArea: NoteEvent[] | undefined;
 
   const buttons: FretButton[] = buttonDefs.map((b) => ({
     ...b,
@@ -25,7 +26,7 @@
   }
 
   function getFirstChordInHitArea(): (NoteEvent | undefined)[] | null {
-    const notes = guitar.getNotesInHitArea();
+    const notes = guitar.getNotesInHitArea().filter((n) => !guitar.isZapped(n));
     if (notes.length === 0) {
       return null;
     }
@@ -44,25 +45,70 @@
 
   function hitNotes(isTap: boolean): void {
     const chord = getFirstChordInHitArea();
-    if (chord === null) {
-      return;
+    if (chord !== null) {
+      console.log(isTap ? "tap" : "strum", chord);
+      const buttonState = buttons.map((b) => b.isDown);
+      const chordRequiredButtonState = chord.map((note) => note !== undefined);
+      const canHit =
+        !isTap || chord.every((note) => note === undefined || canTap(note));
+      if (isEqual(buttonState, chordRequiredButtonState) && canHit) {
+        $activeScore.combo += 1;
+        for (const note of chord) {
+          if (note) {
+            $activeScore.score += 100;
+            guitar.zapNote(note);
+          }
+        }
+        return;
+      }
     }
-    console.log(isTap ? "tap" : "strum", chord);
 
-    const buttonState = buttons.map((b) => b.isDown);
-    const chordRequiredButtonState = chord.map((note) => note !== undefined);
-    if (
-      isEqual(buttonState, chordRequiredButtonState) &&
-      (!isTap || chord.every((note) => note === undefined || canTap(note)))
-    ) {
-      // TODO we need to work out when to drop combos
-      $activeScore.combo += 1;
-      for (const note of chord) {
-        if (note) {
-          guitar.zapNote(note);
+    // if we didn't return above then there was no chord or the incorrect chord was input
+    // therefore if this hit was a strum it counts as overstrumming so drop the combo
+    if (!isTap) {
+      $activeScore.combo = 0;
+    }
+  }
+
+  function processInputs(): void {
+    let shouldTap = false;
+    for (let i = 0; i < buttons.length; i++) {
+      const action = i.toString() as ButtonAction;
+      const wasDown = buttons[i].isDown;
+      const shouldBeDown = inputManager.getButtonState(action) !== "inactive";
+      if (shouldBeDown !== wasDown) {
+        buttons[i].isDown = shouldBeDown;
+        shouldTap = true;
+      }
+    }
+
+    const shouldStrum =
+      inputManager.getButtonState("strum-down") === "pressed" ||
+      inputManager.getButtonState("strum-up") === "pressed";
+
+    // if we should tap or strum then we should check if we hit the correct chord
+    if (shouldStrum || shouldTap) {
+      // we only count the input as a tap if we didn't press strum on this same input tick
+      hitNotes(!shouldStrum && shouldTap);
+    }
+  }
+
+  function processComboUpdate(): void {
+    const nextNotesInHitArea = guitar.getNotesInHitArea();
+    if (lastNotesInHitArea) {
+      // find all the notes that were in the hit area and aren't anymore
+      const notes = lastNotesInHitArea.filter(
+        (n) => !nextNotesInHitArea.includes(n)
+      );
+      for (const note of notes) {
+        // check if any weren't zapped and drop the combo if so
+        if (!guitar.isZapped(note)) {
+          $activeScore.combo = 0;
+          break;
         }
       }
     }
+    lastNotesInHitArea = nextNotesInHitArea;
   }
 
   onMount(() => {
@@ -94,27 +140,8 @@
   $: if (guitar) {
     guitar.update(activeSongPoint);
     inputManager.update();
-
-    let shouldTap = false;
-    for (let i = 0; i < buttons.length; i++) {
-      const action = i.toString() as ButtonAction;
-      const wasDown = buttons[i].isDown;
-      const shouldBeDown = inputManager.getButtonState(action) !== "inactive";
-      if (shouldBeDown !== wasDown) {
-        buttons[i].isDown = shouldBeDown;
-        shouldTap = true;
-      }
-    }
-
-    const shouldStrum =
-      inputManager.getButtonState("strum-down") === "pressed" ||
-      inputManager.getButtonState("strum-up") === "pressed";
-
-    // if we should tap or strum then we should check if we hit the correct chord
-    if (shouldStrum || shouldTap) {
-      // we only count the input as a tap if we didn't press strum on this same input tick
-      hitNotes(!shouldStrum && shouldTap);
-    }
+    processInputs();
+    processComboUpdate();
   }
 </script>
 
