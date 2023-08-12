@@ -152,7 +152,9 @@ export class CanvasGuitar {
 
     this.drawBeatLines();
     this.drawTrack();
-    this.drawDebug();
+    if (import.meta.env.DEV) {
+      this.drawDebug();
+    }
   }
 
   private drawNote(note: Timed<NoteEvent>, hitZoneY: number): void {
@@ -256,7 +258,7 @@ export class CanvasGuitar {
   }
 
   private getHitZoneLimitY(): number {
-    return this.canvas.height / devicePixelRatio - this.buttonRadius * 4.5;
+    return this.canvas.height / devicePixelRatio - this.buttonRadius * 5;
   }
 
   getNotesInHitArea(): NoteEvent[] {
