@@ -85,6 +85,7 @@ export class InputManager {
   private readonly actionMaps: Record<string, ActionMap>;
   private readonly actionStateMaps: Record<string, ActionStateMap>;
   private readonly eventListeners: [keyof WindowEventMap, Function][] = [];
+  private readonly keyboardState: Record<string, boolean> = Object.create(null);
 
   // TODO use constructor parameter + svelte stores + localStorage to make rebindable per-device actionmaps
   constructor(actionMaps?: Record<string, ActionMap>) {
@@ -133,32 +134,16 @@ export class InputManager {
       // just be careful not to set an axis action with a button state
       // or a button action with a number
       (actionMap as any)[action] = state;
+      console.log(controllerName, action, state);
     }
   }
 
-  private onKeyUp(ev: KeyboardEvent): void {
-    const map = this.actionMaps["keyboard"];
-    const action = map.buttons[ev.key];
-    if (typeof action === "string") {
-      this.setActionState("keyboard", action, "inactive");
-    } else if (action) {
-      this.setActionState("keyboard", action.axisAction, action.unpressedValue);
-    }
+  private onKeyUp({ key }: KeyboardEvent): void {
+    this.keyboardState[key] = false;
   }
 
-  private onKeyDown(ev: KeyboardEvent): void {
-    const map = this.actionMaps["keyboard"];
-    const action = map.buttons[ev.key];
-    if (typeof action === "string") {
-      const currentState = this.actionStateMaps["keyboard"][action];
-      this.setActionState(
-        "keyboard",
-        action,
-        currentState === "inactive" ? "pressed" : "held"
-      );
-    } else if (action) {
-      this.setActionState("keyboard", action.axisAction, action.pressedValue);
-    }
+  private onKeyDown({ key }: KeyboardEvent): void {
+    this.keyboardState[key] = true;
   }
 
   private onGamepadConnected({ gamepad }: GamepadEvent): void {
@@ -197,8 +182,7 @@ export class InputManager {
     return prioInput;
   }
 
-  update(): void {
-    // TODO test this
+  private updateGamepads(): void {
     for (const gamepad of navigator.getGamepads()) {
       if (gamepad === null) {
         continue;
@@ -247,5 +231,27 @@ export class InputManager {
         }
       }
     }
+  }
+
+  private updateKeyboard(): void {
+    const map = this.actionMaps["keyboard"];
+    for (const [key, pressed] of Object.entries(this.keyboardState)) {
+      const action = map.buttons[key];
+      if (typeof action === "string") {
+        const currentState = this.actionStateMaps["keyboard"][action];
+        const nextPressedState =
+          currentState === "inactive" ? "pressed" : "held";
+        const nextState = pressed ? nextPressedState : "inactive";
+        this.setActionState("keyboard", action, nextState);
+      } else if (action) {
+        const value = pressed ? action.pressedValue : action.unpressedValue;
+        this.setActionState("keyboard", action.axisAction, value);
+      }
+    }
+  }
+
+  update(): void {
+    this.updateGamepads();
+    this.updateKeyboard();
   }
 }

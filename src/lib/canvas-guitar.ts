@@ -156,7 +156,7 @@ export class CanvasGuitar {
   }
 
   private drawNote(note: Timed<NoteEvent>, hitZoneY: number): void {
-    const { ctx, canvas, notesInHitArea } = this;
+    const { ctx, notesInHitArea } = this;
 
     const y = this.timeToY(note.assignedTime);
     const stringOffset = this.guitarWidth / this.buttons.length;
@@ -296,14 +296,14 @@ export class CanvasGuitar {
     }
 
     ctx.textAlign = "center";
-    ctx.setLineDash([this.canvasWidth / 100, this.canvasWidth / 50]);
     ctx.beginPath();
     const hitZoneY = this.getHitZoneLimitY();
-    ctx.moveTo(0, hitZoneY);
-    ctx.lineTo(this.canvasWidth, hitZoneY);
-    ctx.stroke();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.rect(0, hitZoneY, this.canvasWidth, this.canvasHeight - hitZoneY);
+    ctx.fill();
+    ctx.fillStyle = "white";
     const text = `${time.toFixed(2)}s - ${tick}t`;
-    ctx.fillText(text, this.canvasWidth / 2, hitZoneY + 28);
+    ctx.fillText(text, this.canvasWidth / 2, this.canvasHeight - 16);
   }
 
   // TODO add some way of hitting duration notes and changing their color whilst in that state
@@ -315,8 +315,12 @@ export class CanvasGuitar {
     this.zappedNotes.clear();
   }
 
+  isZapped(note: NoteEvent): boolean {
+    return this.zappedNotes.has(note);
+  }
+
   private drawBeatLines(): void {
-    const { ctx, canvas, chart } = this;
+    const { ctx, chart } = this;
 
     if (!chart) {
       return;
