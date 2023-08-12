@@ -163,6 +163,11 @@
 
   <div class="absolute w-full h-full" bind:this={guitarContainer} />
 
+  <div
+    class="absolute translate-y-1/2 bg-base-100 h-1 w-full left-0"
+    style="bottom: {buttonRadius * 2}px"
+  />
+
   {#each buttons as button, i}
     <div
       class="button"
