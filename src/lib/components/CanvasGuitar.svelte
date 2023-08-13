@@ -57,6 +57,7 @@
           if (note) {
             activeScore.update((c) => c + 100);
             guitar.zapNote(note);
+            animateButton(note.note);
           }
         }
         return;
@@ -68,6 +69,27 @@
     if (!isTap) {
       $activeCombo = 0;
     }
+  }
+
+  function animateButton(btn: number): void {
+    const el = buttons[btn].buttonEl;
+    if (!el) {
+      return;
+    }
+
+    el.animate(
+      [
+        {
+          transform: "translateY(-20px)",
+          boxShadow: "rgba(0, 0, 0, 0.5) 0px 20px 0px",
+        },
+        {},
+      ],
+      {
+        duration: 150,
+        iterations: 1,
+      }
+    );
   }
 
   function processInputs(): void {
@@ -177,22 +199,18 @@
       )}px; width: {buttonRadius *
         2}px; background-color: {button.color}; bottom: {buttonRadius}px;"
     >
-      <div class="button-center button-center-lower" />
       <div
-        class="button-center button-center-upper"
+        class="button-center button-center"
         class:pressed={button.isDown}
+        bind:this={buttons[i].buttonEl}
       />
     </div>
   {/each}
 </div>
 
 <style lang="postcss">
-  .button > * {
-    @apply w-2/3 aspect-square absolute;
-  }
-
-  .button-center-upper {
-    @apply bg-base-100 rounded-full;
+  .button-center {
+    @apply bg-base-100 rounded-full w-2/3 aspect-square absolute;
     transition-property: all;
     transition-duration: 100ms;
     box-shadow: rgba(0, 0, 0, 0.5) 0px 10px 0px;

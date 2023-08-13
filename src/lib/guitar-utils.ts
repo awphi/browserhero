@@ -9,6 +9,7 @@ export interface FretButtonDef {
 
 export interface FretButton extends FretButtonDef {
   isDown: boolean;
+  buttonEl?: HTMLDivElement;
 }
 
 export const buttonDefs: FretButtonDef[] = [
