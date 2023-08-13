@@ -1,6 +1,6 @@
 import isPlainObject from "lodash/isPlainObject";
 
-export const instruments = [
+export const chorusInstruments = [
   "drums",
   "guitar",
   "bass",
@@ -9,13 +9,13 @@ export const instruments = [
   "rhythm",
   "guitarghl",
 ] as const;
-export const difficulties = ["e", "m", "h", "x"] as const;
+export const chorusDifficulties = ["e", "m", "h", "x"] as const;
 
 const requiredStringKeys = ["name", "album", "artist", "year"] as const;
 
-export type Instrument = (typeof instruments)[number];
+export type ChorusInstrument = (typeof chorusInstruments)[number];
 
-export type Difficulty = (typeof difficulties)[number];
+export type ChorusDifficulty = (typeof chorusDifficulties)[number];
 
 export interface ChorusAPISong {
   id: number;
@@ -47,8 +47,8 @@ export interface ChorusAPISong {
   hasBrokenNotes: boolean;
   hasBackground: boolean;
   noteCounts: {
-    [key in Instrument]?: {
-      [key in Difficulty]?: number;
+    [key in ChorusInstrument]?: {
+      [key in ChorusDifficulty]?: number;
     };
   };
   isProcessing: boolean;
@@ -69,7 +69,7 @@ export function ensureSong(song: unknown): ChorusAPISong | null {
     isPlainObject(songObjectMut.noteCounts)
   ) {
     Object.keys(songObjectMut.noteCounts).forEach((key) => {
-      if (!instruments.includes(key as Instrument)) {
+      if (!chorusInstruments.includes(key as ChorusInstrument)) {
         delete songObjectMut.noteCounts[key];
       }
     });
@@ -104,7 +104,7 @@ export function ensureSongs(songs: unknown[]): ChorusAPISong[] {
   return songs.map(ensureSong).filter((a) => a !== null) as ChorusAPISong[];
 }
 
-export function formatInstrumentName(instrument: Instrument): string {
+export function formatInstrumentName(instrument: ChorusInstrument): string {
   let base = instrument.slice(0, 1).toUpperCase() + instrument.slice(1);
   if (instrument.endsWith("ghl")) {
     base = base.slice(0, -3) + " (GHL)";
