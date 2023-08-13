@@ -2,7 +2,7 @@
   import Menu from "$lib/components/Menu.svelte";
   import PausePlay from "$lib/components/PausePlay.svelte";
   import { onMount } from "svelte";
-  import { activeSong, activeScore } from "$lib/stores";
+  import { activeSong, activeScore, activeCombo } from "$lib/stores";
   import SongMetaDisplay from "$lib/components/SongMetaDisplay.svelte";
   import { loadSongArchiveFromUrl } from "$lib/song-loader";
   import CanvasGuitar from "$lib/components/CanvasGuitar.svelte";
@@ -48,7 +48,7 @@
   <div class="flex w-full h-full items-center justify-center">
     <CanvasGuitar {activeSongPoint} />
     <div class="score-display-container">
-      <ScoreDisplay score={$activeScore} />
+      <ScoreDisplay score={$activeScore} combo={$activeCombo} />
     </div>
 
     <!--<ThreeGuitar {activeSongPoint} /> -->

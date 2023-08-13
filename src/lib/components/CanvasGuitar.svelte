@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { activeSong, activeScore } from "../stores";
+  import { activeSong, activeScore, activeCombo } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
   import { getNoteX, type FretButton, buttonDefs } from "$lib/guitar-utils";
   import { onMount } from "svelte";
@@ -22,7 +22,7 @@
   }));
 
   function canTap(note: NoteEvent): boolean {
-    return note.tap || (note.isHOPO && $activeScore.combo >= 1);
+    return note.tap || (note.isHOPO && $activeCombo >= 1);
   }
 
   function getFirstChordInHitArea(): (NoteEvent | undefined)[] | null {
@@ -52,10 +52,10 @@
       const canHit =
         !isTap || chord.every((note) => note === undefined || canTap(note));
       if (isEqual(buttonState, chordRequiredButtonState) && canHit) {
-        $activeScore.combo += 1;
+        $activeCombo += 1;
         for (const note of chord) {
           if (note) {
-            $activeScore.score += 100;
+            activeScore.update((c) => c + 100);
             guitar.zapNote(note);
           }
         }
@@ -66,7 +66,7 @@
     // if we didn't return above then there was no chord or the incorrect chord was input
     // therefore if this hit was a strum it counts as overstrumming so drop the combo
     if (!isTap) {
-      $activeScore.combo = 0;
+      $activeCombo = 0;
     }
   }
 
@@ -103,7 +103,7 @@
       for (const note of notes) {
         // check if any weren't zapped and drop the combo if so
         if (!guitar.isZapped(note)) {
-          $activeScore.combo = 0;
+          $activeCombo = 0;
           break;
         }
       }
