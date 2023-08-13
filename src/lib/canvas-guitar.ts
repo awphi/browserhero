@@ -344,16 +344,12 @@ export class CanvasGuitar {
       const y = this.tickToY(t);
       if (y >= 0 && y <= this.canvasHeight) {
         // we draw beat lines on half-beats so we divide the denom by two
-        const barLineMultiple = beatsPerBar * (ts.denominator / 2);
-        if (lineIndex % barLineMultiple === 0) {
+        if (lineIndex % beatsPerBar === 0) {
           // bar line
           ctx.strokeStyle = "rgba(25,30,36, 1)";
-        } else if (lineIndex % 2 === 0) {
+        } else {
           // even beat line
           ctx.strokeStyle = "rgba(25,30,36, 0.6)";
-        } else {
-          // odd beat line
-          ctx.strokeStyle = "rgba(25,30,36, 0.3)";
         }
         ctx.beginPath();
         ctx.moveTo(0, y);
@@ -367,8 +363,7 @@ export class CanvasGuitar {
         lineIndex = 0;
         beatsPerBar = newBeatsPerBar;
       }
-      const stepDivisor = ts.denominator / 2;
-      t += res / stepDivisor;
+      t += res;
       lineIndex++;
     }
   }
