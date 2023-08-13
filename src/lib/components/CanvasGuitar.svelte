@@ -25,7 +25,10 @@
     return note.tap || (note.isHOPO && $activeCombo >= 1);
   }
 
-  function getFirstChordInHitArea(): (NoteEvent | undefined)[] | null {
+  function getFirstChordInHitArea():
+    | (NoteEvent | undefined)[]
+    | NoteEvent
+    | null {
     const notes = guitar.getNotesInHitArea().filter((n) => !guitar.isZapped(n));
     if (notes.length === 0) {
       return null;
@@ -35,6 +38,10 @@
     for (const note of notes) {
       if (note.tick !== notes[0].tick) {
         break;
+      }
+
+      if (note.note === 7) {
+        return note;
       }
 
       result[note.note] = note;
@@ -47,20 +54,33 @@
     const chord = getFirstChordInHitArea();
     if (chord !== null) {
       console.log(isTap ? "tap" : "strum", chord);
-      const buttonState = buttons.map((b) => b.isDown);
-      const chordRequiredButtonState = chord.map((note) => note !== undefined);
-      const canHit =
-        !isTap || chord.every((note) => note === undefined || canTap(note));
-      if (isEqual(buttonState, chordRequiredButtonState) && canHit) {
-        $activeCombo += 1;
-        for (const note of chord) {
-          if (note) {
-            activeScore.update((c) => c + 100);
-            guitar.zapNote(note);
-            animateButton(note.note);
+      if (Array.isArray(chord)) {
+        const buttonState = buttons.map((b) => b.isDown);
+        const chordRequiredButtonState = chord.map(
+          (note) => note !== undefined
+        );
+        const canHit =
+          !isTap || chord.every((note) => note === undefined || canTap(note));
+        if (isEqual(buttonState, chordRequiredButtonState) && canHit) {
+          $activeCombo += 1;
+          for (const note of chord) {
+            if (note) {
+              activeScore.update((c) => c + 100);
+              guitar.zapNote(note);
+              animateButton(note.note);
+            }
+          }
+          return;
+        }
+      } else if (chord.note === 7) {
+        const areAllButtonsUp = buttons.every((b) => !b.isDown);
+        if (areAllButtonsUp && (!isTap || canTap(chord))) {
+          activeScore.update((c) => c + 100);
+          guitar.zapNote(chord);
+          for (let i = 0; i < buttons.length; i++) {
+            animateButton(i);
           }
         }
-        return;
       }
     }
 
@@ -140,7 +160,7 @@
       guitarWidth,
       buttonDefs,
       buttonRadius,
-      "MediumSingle"
+      "ExpertSingle"
     );
 
     return () => {

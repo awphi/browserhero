@@ -20,7 +20,11 @@
 
   async function loadDebugSong(): Promise<void> {
     activeSong.set("loading");
-    const testUrl = new URL("/mr-brightside.7z", import.meta.url).toString();
+    const testUrl = new URL(
+      //"/mr-brightside.7z",
+      "/cowboys-dont-cry.zip",
+      import.meta.url
+    ).toString();
     try {
       const song = await loadSongArchiveFromUrl(testUrl);
       activeSong.set(song);
