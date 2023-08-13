@@ -3,8 +3,8 @@
   import {
     formatInstrumentName,
     type ChorusAPISong,
-    type Instrument,
-    difficulties,
+    type ChorusInstrument,
+    chorusDifficulties,
   } from "../../chorus";
   import { activeSong } from "../../stores";
   import { backOff } from "exponential-backoff";
@@ -12,8 +12,8 @@
   export let song: ChorusAPISong;
   export let disabled: boolean;
   let clazz: string;
-  let instruments: Instrument[];
-  $: instruments = Object.keys(song.noteCounts) as Instrument[];
+  let instruments: ChorusInstrument[];
+  $: instruments = Object.keys(song.noteCounts) as ChorusInstrument[];
 
   export { clazz as class };
 
@@ -54,19 +54,19 @@
     }
   }
 
-  const instrumentIconMap: Record<Instrument, string> = {
+  const instrumentIconMap: Record<ChorusInstrument, string> = {
     guitar: "ph-guitar ph-fill",
     keys: "ph-piano-keys ph-fill",
-    bass: "ph-guitar ph-fill",
+    bass: "ph-speaker-hifi ph-fill",
     vocals: "ph-microphone-stage ph-fill",
     drums: "ph-record ph-fill",
     rhythm: "ph-hands-clapping ph-fill",
-    guitarghl: "ph-guitar ph-fill",
+    guitarghl: "ph-x ph-fill",
   };
 </script>
 
 <div
-  class={`flex-col w-full py-2 px-3 rounded-lg bg-base-100 border border-neutral-content border-opacity-20 ${clazz}`}
+  class="flex-col w-full py-2 px-3 rounded-lg bg-base-100 border border-neutral-content border-opacity-20 {clazz}"
 >
   <div class="flex">
     <div class="flex flex-col flex-1 mr-2">
@@ -75,8 +75,8 @@
       </p>
       <p
         class:tooltip={song.artist.length > 16 || song.album.length > 20}
-        class="text-sm text-left tooltip-bottom w-fit"
-        data-tip={`${song.artist} - ${song.album} (${song.year})`}
+        class="text-left tooltip-bottom w-fit"
+        data-tip="{song.artist} - {song.album} ({song.year})"
       >
         {abbreviate(song.artist, 24)} - {abbreviate(song.album, 32)} ({song.year})
       </p>
@@ -94,9 +94,9 @@
         class="bg-base-200 text-base-content border-base-content border border-opacity-20 flex items-center tooltip tooltip-top p-1 rounded-md"
         data-tip={formatInstrumentName(instrument)}
       >
-        <i class={`${instrumentIconMap[instrument]} text-lg`} />
-        <div class="flex text-sm ml-1">
-          {#each difficulties as diff}
+        <i class="{instrumentIconMap[instrument]} text-lg" />
+        <div class="flex mx-1">
+          {#each chorusDifficulties as diff}
             <p
               class:instrument-difficulty-valid={song.noteCounts[instrument]?.[
                 diff
@@ -111,7 +111,7 @@
   </div>
   {#if song.uploadedAt && song.charter}
     <div class=" mt-1 flex gap-1 items-center">
-      <p class="text-xs">
+      <p class="text-sm">
         Charted by:
         {abbreviate(song.charter, 54)} ({new Date(
           song.uploadedAt

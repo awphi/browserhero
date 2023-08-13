@@ -1,4 +1,4 @@
-import type { Bpm, ParsedChart, TickEvent, Timed } from "./chart-parser";
+import type { Bpm, TickEvent, Timed } from "./chart-parser";
 
 export function disToTime(
   tickStart: number,

@@ -94,7 +94,14 @@ export const difficulties = ["Easy", "Medium", "Hard", "Expert"] as const;
 export type Difficulty = (typeof difficulties)[number];
 
 // TODO add support for more instrument types
-export const instruments = ["Single", "DoubleBass"] as const;
+export const instruments = [
+  "Single",
+  "DoubleBass",
+  "DoubleRhythm",
+  "Keyboard",
+  "DoubleGuitar",
+  "Vocals",
+] as const;
 export type Instrument = (typeof instruments)[number];
 
 const instrumentTrackParsers: {
@@ -102,6 +109,10 @@ const instrumentTrackParsers: {
 } = {
   Single: parseSingleSection,
   DoubleBass: parseSingleSection,
+  DoubleGuitar: parseSingleSection,
+  Keyboard: parseSingleSection,
+  DoubleRhythm: parseSingleSection,
+  Vocals: parseSingleSection,
 };
 
 const requiredSections = ["Song", "SyncTrack"];
