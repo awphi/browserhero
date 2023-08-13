@@ -55,12 +55,12 @@ export interface ChorusAPISong {
   archiveUrl?: string;
 }
 
-// we just call it any since we're gonna do a bunch of mutation on it
 export function ensureSong(song: unknown): ChorusAPISong | null {
   if (!isPlainObject(song)) {
     return null;
   }
 
+  // just cast it as any since we're gonna do a bunch of mutation on it
   const songObjectMut = song as any;
 
   // Assert that noteCounts exists and prune out invalid entries

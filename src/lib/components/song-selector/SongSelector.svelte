@@ -42,16 +42,13 @@
   async function search(extend: boolean = false): Promise<void> {
     searching = true;
 
+    // if we're extending the current search use the last search term rather than the current input text
+    const term = extend ? lastSearchTerm : inputText;
+
     // if we're not extending then load some dummy data to blur out in the results window
     if (!extend) {
       extendFrom = 0;
       loadedSongs = DUMMY_DATA;
-    }
-
-    // if we're extending the current search use the last search term rather than the current input text
-    const term = extend ? lastSearchTerm : inputText;
-
-    if (!extend) {
       lastSearchTerm = inputText;
     }
 

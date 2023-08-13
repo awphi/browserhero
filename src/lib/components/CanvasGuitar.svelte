@@ -75,7 +75,7 @@
       } else if (chord.note === 7) {
         const areAllButtonsUp = buttons.every((b) => !b.isDown);
         if (areAllButtonsUp && (!isTap || canTap(chord))) {
-          activeScore.update((c) => c + 100);
+          activeScore.update((c) => c + buttons.length * 100);
           guitar.zapNote(chord);
           for (let i = 0; i < buttons.length; i++) {
             animateButton(i);
