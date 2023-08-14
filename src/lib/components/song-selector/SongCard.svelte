@@ -65,9 +65,7 @@
   };
 </script>
 
-<div
-  class="flex-col w-full py-2 px-3 rounded-lg bg-base-100 border border-neutral-content border-opacity-20 {clazz}"
->
+<div class="flex-col w-full py-2 px-3 rounded-lg bg-base-100 {clazz}">
   <div class="flex">
     <div class="flex flex-col flex-1 mr-2">
       <p class="text-primary-content">
