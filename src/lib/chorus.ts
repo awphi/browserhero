@@ -55,6 +55,13 @@ export interface ChorusAPISong {
   archiveUrl?: string;
 }
 
+export interface ChorusSongSelectorState {
+  songs: ChorusAPISong[];
+  isExtendable: boolean;
+  searchTerm: string;
+  extendFrom: number;
+}
+
 export function ensureSong(song: unknown): ChorusAPISong | null {
   if (!isPlainObject(song)) {
     return null;

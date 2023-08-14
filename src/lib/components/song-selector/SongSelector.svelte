@@ -1,70 +1,47 @@
 <script lang="ts">
   import DUMMY_DATA from "../../assets/dummy-data";
   import SongCard from "./SongCard.svelte";
-  import {
-    songSelectorSearchTerm,
-    songSelectorSongs,
-    activeSong,
-  } from "../../stores";
-  import { onDestroy, onMount } from "svelte";
+  import { activeSong, songSelectorState } from "../../stores";
+  import { onMount } from "svelte";
   import type { ChorusAPISong } from "../../chorus";
 
-  let searching = false;
-  let loadedSongs: ChorusAPISong[] = [];
-  let isDummy = true;
-  let inputText = "";
-  let lastSearchTerm = inputText;
-  let canExtend = true;
-  let extendFrom = 0;
-
-  $: isDummy = loadedSongs === DUMMY_DATA;
+  let status: "extending" | "idle" | "searching" = "idle";
+  let displayedSongs: ChorusAPISong[] = $songSelectorState.songs;
+  let lastSearchTerm = $songSelectorState.searchTerm;
 
   onMount(() => {
-    if ($songSelectorSearchTerm) {
-      inputText = $songSelectorSearchTerm;
-    }
-
-    if ($songSelectorSongs.length > 0) {
-      loadedSongs = $songSelectorSongs;
-    } else {
+    if ($songSelectorState.songs.length <= 0) {
       search(false);
     }
   });
 
-  onDestroy(() => {
-    if (!isDummy && loadedSongs.length > 0) {
-      songSelectorSongs.set(loadedSongs);
-    }
-
-    songSelectorSearchTerm.set(inputText);
-  });
-
   async function search(extend: boolean = false): Promise<void> {
-    searching = true;
+    status = extend ? "extending" : "searching";
 
     // if we're extending the current search use the last search term rather than the current input text
-    const term = extend ? lastSearchTerm : inputText;
+    const term = extend ? lastSearchTerm : $songSelectorState.searchTerm;
 
     // if we're not extending then load some dummy data to blur out in the results window
     if (!extend) {
-      extendFrom = 0;
-      loadedSongs = DUMMY_DATA;
-      lastSearchTerm = inputText;
+      $songSelectorState.extendFrom = 0;
+      displayedSongs = DUMMY_DATA;
+      lastSearchTerm = $songSelectorState.searchTerm;
     }
 
     const params = new URLSearchParams({
       query: term,
-      from: extend ? extendFrom.toString() : "0",
+      from: extend ? $songSelectorState.searchTerm.toString() : "0",
     });
     const result = await fetch(`/api/search-songs?${params}`);
     const json = await result.json();
-    canExtend = json.originalLength >= 20;
-    if (canExtend) {
-      extendFrom += 20;
+    $songSelectorState.isExtendable = json.originalLength >= 20;
+    if ($songSelectorState.isExtendable) {
+      $songSelectorState.extendFrom += 20;
     }
-    loadedSongs = extend ? [...loadedSongs, ...json.songs] : json.songs;
+    displayedSongs = extend ? [...displayedSongs, ...json.songs] : json.songs;
+    $songSelectorState.songs = displayedSongs;
 
-    searching = false;
+    status = "idle";
   }
 </script>
 
@@ -74,7 +51,7 @@
       type="text"
       placeholder="Search chorus.fightthe.pw..."
       class="input flex-1 join-item input-bordered"
-      bind:value={inputText}
+      bind:value={$songSelectorState.searchTerm}
       on:keypress={(ev) => {
         if (ev.key === "Enter") {
           search();
@@ -86,7 +63,7 @@
       class="btn border-base-content border join-item border-opacity-20 aspect-square"
       on:click={() => search()}
     >
-      {#if searching}
+      {#if status !== "idle"}
         <span class="loading loading-infinity h-full" />
       {:else}
         <i class="ph-fill ph-magnifying-glass text-lg" />
@@ -95,19 +72,19 @@
   </div>
   <div
     class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden rounded-lg gap-2"
-    class:disabled={isDummy}
+    class:disabled={status === "searching"}
   >
-    {#each loadedSongs as song}
+    {#each displayedSongs as song}
       <SongCard
         disabled={$activeSong === "loading"}
         {song}
-        class={isDummy ? "blur-sm" : ""}
+        class={status === "searching" ? "blur-sm" : ""}
       />
     {/each}
-    {#if canExtend}
+    {#if $songSelectorState.isExtendable}
       <button
         class="btn btn-primary btn-sm"
-        disabled={searching}
+        disabled={status !== "idle"}
         on:click={() => search(true)}>Load more...</button
       >
     {/if}
