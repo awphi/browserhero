@@ -1,6 +1,9 @@
 <script lang="ts">
-  import { formatTimespan } from "../util";
-  import { activeSong } from "../stores";
+  import {
+    formatTimespan,
+    getDifficultiesForInstrumentInChart,
+    getInstrumentsInChart,
+  } from "../util";
   import type { SongBundle } from "$lib/song-loader";
 
   export let activeSongPoint: number;
@@ -45,5 +48,17 @@
   <div class="flex justify-between">
     <p>{formatTimespan(activeSongPoint)}</p>
     <p>-{formatTimespan(songLengthSeconds - activeSongPoint)}</p>
+  </div>
+  <div class="flex gap-2 mt-2">
+    <select class="select flex-1 select-bordered select-sm">
+      {#each getDifficultiesForInstrumentInChart(song.chart, "Single") as instrument}
+        <option value={instrument}>{instrument}</option>
+      {/each}
+    </select>
+    <select class="select flex-1 select-bordered select-sm">
+      {#each getInstrumentsInChart(song.chart) as instrument}
+        <option value={instrument}>{instrument}</option>
+      {/each}
+    </select>
   </div>
 </div>

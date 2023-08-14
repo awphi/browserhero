@@ -1,12 +1,9 @@
 <script lang="ts">
   export let paused: boolean;
   export let activeSongPoint: number;
-
-  let clazz: string = "";
-  export { clazz as class };
 </script>
 
-<div class={`join ${clazz}`}>
+<div class="join">
   <button class="btn join-item" on:click={() => (paused = !paused)}>
     {#if paused}
       <i class="ph-fill ph-play text-lg" />

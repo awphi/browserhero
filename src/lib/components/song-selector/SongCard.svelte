@@ -6,7 +6,7 @@
     type ChorusInstrument,
     chorusDifficulties,
   } from "../../chorus";
-  import { activeSong } from "../../stores";
+  import { loadSong } from "../../stores";
   import { backOff } from "exponential-backoff";
 
   export let song: ChorusAPISong;
@@ -33,8 +33,7 @@
   }
 
   async function play(): Promise<void> {
-    activeSong.set("loading");
-    try {
+    loadSong(async () => {
       const res = await backOff(fetchSongArchive, {
         retry: (e, n) => {
           // TODO toasts for the status of this + disable loading other songs
@@ -46,12 +45,8 @@
       });
       const url = await res.text();
       const song = await loadSongArchiveFromUrl(url);
-      activeSong.set(song);
-    } catch (e) {
-      activeSong.set(undefined);
-      // TODO error message for failing
-      console.log(e);
-    }
+      return song;
+    });
   }
 
   const instrumentIconMap: Record<ChorusInstrument, string> = {

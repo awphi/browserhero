@@ -1,7 +1,7 @@
 <script lang="ts">
   import DUMMY_DATA from "../../assets/dummy-data";
   import SongCard from "./SongCard.svelte";
-  import { activeSong, songSelectorState } from "../../stores";
+  import { activeSongState, songSelectorState } from "../../stores";
   import { onMount } from "svelte";
   import type { ChorusAPISong } from "../../chorus";
 
@@ -76,7 +76,7 @@
   >
     {#each displayedSongs as song}
       <SongCard
-        disabled={$activeSong === "loading"}
+        disabled={$activeSongState === "loading"}
         {song}
         class={status === "searching" ? "blur-sm" : ""}
       />

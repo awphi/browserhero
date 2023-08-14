@@ -174,7 +174,7 @@
   }
 
   $: {
-    if (typeof $activeSong === "object" && guitarContainer) {
+    if ($activeSong && guitarContainer) {
       guitar.setChart($activeSong.chart);
     }
   }
