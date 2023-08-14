@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
 
+  // TODO connect up the settings to the guitar
   let lastUpdate = new Date();
   let speedSlider: number = 1;
 </script>
