@@ -12,7 +12,7 @@
       guitar.destroy();
     }
 
-    if (typeof $activeSong === "object" && sceneContainer) {
+    if ($activeSong && sceneContainer) {
       guitar = new ThreeGuitar(sceneContainer);
     } else {
       guitar = undefined;

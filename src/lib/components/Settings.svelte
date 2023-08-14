@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { difficulties, instruments } from "$lib/chart-parser";
   import { onMount } from "svelte";
 
   // TODO connect up the settings to the guitar
@@ -22,14 +23,15 @@
     <div class="settings-grid">
       <span>Preferred Difficulty:</span>
       <select class="select select-primary select-sm text-primary-content">
-        <option value="Easy">Easy</option>
-        <option value="Medium">Medium</option>
-        <option value="Hard">Hard</option>
-        <option value="Expert">Expert</option>
+        {#each difficulties as diff}
+          <option value={diff}>{diff}</option>
+        {/each}
       </select>
       <span>Preferred Instrument:</span>
       <select class="select select-primary text-primary-content select-sm">
-        <option value="Single">Guitar</option>
+        {#each instruments as instrument}
+          <option value={instrument}>{instrument}</option>
+        {/each}
       </select>
       <span>Speed:</span>
       <div class="flex gap-2">
