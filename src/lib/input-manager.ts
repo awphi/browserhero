@@ -85,7 +85,7 @@ export class InputManager {
   private readonly actionMaps: Record<string, ActionMap>;
   private readonly actionStateMaps: Record<string, ActionStateMap>;
   private readonly eventListeners: [keyof WindowEventMap, Function][] = [];
-  private readonly keyboardState: Record<string, boolean> = Object.create(null);
+  private keyboardState: Record<string, boolean> = Object.create(null);
 
   // TODO use constructor parameter + svelte stores + localStorage to make rebindable per-device actionmaps
   constructor(actionMaps?: Record<string, ActionMap>) {
@@ -253,5 +253,6 @@ export class InputManager {
   update(): void {
     this.updateGamepads();
     this.updateKeyboard();
+    this.keyboardState = Object.create(null);
   }
 }
