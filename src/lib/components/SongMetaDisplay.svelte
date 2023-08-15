@@ -41,7 +41,7 @@
   />
   <!-- TODO allow scrubbing with this progress bar -->
   <progress
-    class="progress w-full"
+    class="progress mt-2 progress-primary w-full"
     value={activeSongPoint}
     max={songLengthSeconds}
   />

@@ -2,7 +2,13 @@
   import Menu from "$lib/components/Menu.svelte";
   import PausePlay from "$lib/components/PausePlay.svelte";
   import { onMount } from "svelte";
-  import { activeSong, activeScore, activeCombo, loadSong } from "$lib/stores";
+  import {
+    activeSong,
+    activeScore,
+    activeSongState,
+    activeCombo,
+    loadSong,
+  } from "$lib/stores";
   import SongMetaDisplay from "$lib/components/SongMetaDisplay.svelte";
   import { loadSongArchiveFromUrl } from "$lib/song-loader";
   import CanvasGuitar from "$lib/components/CanvasGuitar.svelte";
@@ -48,7 +54,7 @@
     <!--<ThreeGuitar {activeSongPoint} /> -->
   </div>
   <div class="absolute top-2 right-2">
-    {#if typeof $activeSong === "object"}
+    {#if $activeSongState === "idle" && $activeSong}
       <SongMetaDisplay song={$activeSong} bind:activeSongPoint />
       <AudioTrack
         song={$activeSong}

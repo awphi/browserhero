@@ -8,7 +8,10 @@
   let otherAudioTracks: HTMLAudioElement[] = [];
 
   let audioUrls: string[];
-  $: audioUrls = Object.values(song.audio);
+  $: {
+    otherAudioTracks = [];
+    audioUrls = Object.values(song.audio);
+  }
 
   // Manually re-sync all the other audio tracks to the master track on pause
   $: if (paused) {

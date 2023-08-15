@@ -1,13 +1,15 @@
 <script lang="ts">
   import DUMMY_DATA from "../../assets/dummy-data";
   import SongCard from "./SongCard.svelte";
-  import { activeSongState, songSelectorState } from "../../stores";
+  import { activeSongState, loadSong, songSelectorState } from "../../stores";
   import { onMount } from "svelte";
   import type { ChorusAPISong } from "../../chorus";
+  import { loadSongArchiveFromFile } from "$lib/song-loader";
 
   let status: "extending" | "idle" | "searching" = "idle";
   let displayedSongs: ChorusAPISong[] = $songSelectorState.songs;
   let lastSearchTerm = $songSelectorState.searchTerm;
+  let uploadedArchive: FileList;
 
   onMount(() => {
     if ($songSelectorState.songs.length <= 0) {
@@ -42,6 +44,10 @@
     $songSelectorState.songs = displayedSongs;
 
     status = "idle";
+  }
+
+  $: if (uploadedArchive && uploadedArchive.length > 0) {
+    loadSong(() => loadSongArchiveFromFile(uploadedArchive[0]));
   }
 </script>
 
@@ -90,7 +96,11 @@
     {/if}
   </div>
   <div class="divider">OR</div>
-  <input type="file" class="file-input file-input-bordered w-full" />
+  <input
+    bind:files={uploadedArchive}
+    type="file"
+    class="file-input file-input-bordered w-full"
+  />
 </div>
 
 <style lang="postcss">
