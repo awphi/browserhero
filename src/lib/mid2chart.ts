@@ -147,9 +147,9 @@ export function mid2Chart(
           writeNoteSection(track, 4);
         } else if (name === "PART DRUMS") {
           writeNoteSection(track, 5);
-        } /* else {
-          notices = notices + "Track " + i + " (" + name + ") ignored.\n";
-        } */
+        } else {
+          console.warn("Track " + i + " (" + name + ") ignored.");
+        }
       } /* else {
         notices = notices + "Track " + i + " ignored.\n";
       } */
