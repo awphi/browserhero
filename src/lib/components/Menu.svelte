@@ -29,16 +29,11 @@
 </script>
 
 <div class={`flex ${clazz}`}>
-  <div
-    class="bg-neutral outline-1 outline outline-base-100 my-[1px] rounded-br-lg h-[80vh] transition-all {openTab ===
-    null
-      ? 'closed-menu'
-      : 'open-menu'}"
-  >
+  <div class="menu-container {openTab === null ? 'closed' : 'open'}">
     {#if openTab !== null}
       <div
         class="h-full w-full overflow-hidden"
-        transition:fade={{ duration: 150 }}
+        transition:fade={{ duration: 300 }}
       >
         <svelte:component this={tabs[openTab].component} />
       </div>
@@ -67,11 +62,18 @@
     @apply bg-primary hover:bg-primary-focus text-primary-content;
   }
 
-  .closed-menu {
+  .menu-container {
+    transition-property: width;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+    transition-duration: 300ms;
+    @apply bg-neutral outline-1 outline outline-base-100 my-[1px] rounded-br-lg h-[80vh];
+  }
+
+  .closed {
     width: 0px;
   }
 
-  .open-menu {
+  .open {
     width: 500px;
     @apply p-4;
   }
