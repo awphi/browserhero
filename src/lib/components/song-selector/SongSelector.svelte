@@ -77,7 +77,7 @@
     </button>
   </div>
   <div
-    class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden rounded-lg gap-2"
+    class="flex-1 flex flex-col overflow-y-auto overflow-x-hidden rounded-lg gap-2 pr-1"
     class:disabled={status === "searching"}
   >
     {#each displayedSongs as song}
