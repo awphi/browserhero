@@ -56,7 +56,7 @@
   </div>
   {#if $activeSongState === "idle" && $activeSong}
     <div
-      transition:fly={{ x: 400, duration: 150 }}
+      transition:fly={{ x: 400, duration: 300 }}
       class="absolute top-2 right-2"
     >
       <SongMetaDisplay song={$activeSong} bind:activeSongPoint />
