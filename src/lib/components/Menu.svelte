@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { fade } from "svelte/transition";
   import ControlsMenu from "./ControlsMenu.svelte";
   import Settings from "./Settings.svelte";
   import SongSelector from "./song-selector/SongSelector.svelte";
@@ -28,14 +29,22 @@
 </script>
 
 <div class={`flex ${clazz}`}>
-  {#if openTab !== null}
-    <div
-      class="bg-neutral outline-1 outline outline-base-100 my-[1px] p-4 rounded-br-lg h-[80vh] w-[500px]"
-    >
-      <svelte:component this={tabs[openTab].component} />
-    </div>
-  {/if}
-  <div class="join join-vertical rounded-l-none">
+  <div
+    class="bg-neutral outline-1 outline outline-base-100 my-[1px] rounded-br-lg h-[80vh] transition-all {openTab ===
+    null
+      ? 'closed-menu'
+      : 'open-menu'}"
+  >
+    {#if openTab !== null}
+      <div
+        class="h-full w-full overflow-hidden"
+        transition:fade={{ duration: 150 }}
+      >
+        <svelte:component this={tabs[openTab].component} />
+      </div>
+    {/if}
+  </div>
+  <div class="rounded-l-none join join-vertical">
     {#each tabs as tab, index}
       <button
         class="btn join-item tooltip tooltip-right w-14 h-14"
@@ -56,5 +65,14 @@
 
   .btn.selected {
     @apply bg-primary hover:bg-primary-focus text-primary-content;
+  }
+
+  .closed-menu {
+    width: 0px;
+  }
+
+  .open-menu {
+    width: 500px;
+    @apply p-4;
   }
 </style>

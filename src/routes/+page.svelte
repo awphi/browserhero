@@ -15,6 +15,7 @@
   import ThreeGuitar from "$lib/components/ThreeGuitar.svelte";
   import AudioTrack from "$lib/components/AudioTrack.svelte";
   import ScoreDisplay from "$lib/components/ScoreDisplay.svelte";
+  import { fly, slide } from "svelte/transition";
 
   let activeSongPoint = 0;
   let paused = true;
@@ -39,7 +40,7 @@
   <title>BrowserHero</title>
 </svelte:head>
 
-<div class="h-full overflow-hidden min-w-[700px]">
+<div class="h-full relative">
   <div class="bottom-2 left-2 absolute">
     <PausePlay bind:paused bind:activeSongPoint />
   </div>
@@ -53,16 +54,19 @@
 
     <!--<ThreeGuitar {activeSongPoint} /> -->
   </div>
-  <div class="absolute top-2 right-2">
-    {#if $activeSongState === "idle" && $activeSong}
+  {#if $activeSongState === "idle" && $activeSong}
+    <div
+      transition:fly={{ x: 400, duration: 150 }}
+      class="absolute top-2 right-2"
+    >
       <SongMetaDisplay song={$activeSong} bind:activeSongPoint />
       <AudioTrack
         song={$activeSong}
         bind:currentTime={activeSongPoint}
         bind:paused
       />
-    {/if}
-  </div>
+    </div>
+  {/if}
 </div>
 
 <style>

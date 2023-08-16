@@ -61,7 +61,7 @@
         );
         const canHit =
           !isTap || chord.every((note) => note === undefined || canTap(note));
-        if (isEqual(buttonState, chordRequiredButtonState) && canHit) {
+        if (canHit && isEqual(buttonState, chordRequiredButtonState)) {
           $activeCombo += 1;
           for (const note of chord) {
             if (note) {
@@ -75,11 +75,13 @@
       } else if (chord.note === 7) {
         const areAllButtonsUp = buttons.every((b) => !b.isDown);
         if (areAllButtonsUp && (!isTap || canTap(chord))) {
+          $activeCombo += 1;
           activeScore.update((c) => c + buttons.length * 100);
           guitar.zapNote(chord);
           for (let i = 0; i < buttons.length; i++) {
             animateButton(i);
           }
+          return;
         }
       }
     }
@@ -87,7 +89,7 @@
     // if we didn't return above then there was no chord or the incorrect chord was input
     // therefore if this hit was a strum it counts as overstrumming so drop the combo
     if (!isTap) {
-      $activeCombo = 0;
+      //$activeCombo = 0;
     }
   }
 
