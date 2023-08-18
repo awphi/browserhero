@@ -45,7 +45,9 @@
     <PausePlay bind:paused bind:activeSongPoint />
   </div>
 
-  <Menu class="absolute left-0 top-2 z-10" />
+  <div class="absolute top-2 z-10">
+    <Menu />
+  </div>
   <div class="flex w-full h-full items-center justify-center">
     <CanvasGuitar {activeSongPoint} />
     <div class="score-display-container">
