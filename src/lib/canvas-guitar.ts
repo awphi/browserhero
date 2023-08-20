@@ -266,7 +266,7 @@ export class CanvasGuitar {
   }
 
   private drawDebug(): void {
-    const { ctx, chart, tick, endTick, time } = this;
+    const { ctx, chart, tick, endTick, time, track } = this;
     if (!chart) {
       return;
     }
@@ -304,7 +304,7 @@ export class CanvasGuitar {
     ctx.rect(0, hitZoneY, this.canvasWidth, this.canvasHeight - hitZoneY);
     ctx.fill();
     ctx.fillStyle = "white";
-    const text = `${time.toFixed(2)}s - ${tick}t`;
+    const text = `${track} - ${time.toFixed(2)}s - ${tick}t`;
     ctx.fillText(text, this.canvasWidth / 2, this.canvasHeight - 16);
   }
 

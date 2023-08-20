@@ -1,9 +1,15 @@
 <script lang="ts">
-  import { activeSong, activeScore, activeCombo } from "../stores";
+  import {
+    activeSong,
+    activeScore,
+    activeCombo,
+    activeSongInstrument,
+    activeSongDifficulty,
+  } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
   import { getNoteX, type FretButton, buttonDefs } from "$lib/guitar-utils";
   import { onMount } from "svelte";
-  import type { NoteEvent } from "$lib/chart-parser";
+  import type { ChartTrack, NoteEvent } from "$lib/chart-parser";
   import isEqual from "lodash/isEqual";
   import { InputManager, type ButtonAction } from "$lib/input-manager";
 
@@ -89,7 +95,9 @@
     // if we didn't return above then there was no chord or the incorrect chord was input
     // therefore if this hit was a strum it counts as overstrumming so drop the combo
     if (!isTap) {
-      //$activeCombo = 0;
+      console.log("miss");
+
+      $activeCombo = 0;
     }
   }
 
@@ -161,8 +169,7 @@
       guitarContainer,
       guitarWidth,
       buttonDefs,
-      buttonRadius,
-      "ExpertSingle"
+      buttonRadius
     );
 
     return () => {
@@ -170,6 +177,11 @@
       inputManager.destroy();
     };
   });
+
+  $: if (guitar) {
+    const track: ChartTrack = `${$activeSongDifficulty}${$activeSongInstrument}`;
+    guitar.setTrack(track);
+  }
 
   $: if (activeSongPoint === 0 && guitar) {
     guitar.clearZappedNotes();

@@ -43,7 +43,7 @@
         data-tip={tab.title}
         on:click={() => (openTab = index === openTab ? null : index)}
       >
-        <i class={`ph-fill ${tab.icon} text-xl`} />
+        <i class="ph-fill {tab.icon} text-xl" />
       </button>
     {/each}
   </div>

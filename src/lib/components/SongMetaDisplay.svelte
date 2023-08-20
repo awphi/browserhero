@@ -5,6 +5,7 @@
     getInstrumentsInChart,
   } from "../util";
   import type { SongBundle } from "$lib/song-loader";
+  import { activeSongDifficulty, activeSongInstrument } from "$lib/stores";
 
   export let activeSongPoint: number;
   export let song: SongBundle;
@@ -50,12 +51,18 @@
     <p>-{formatTimespan(songLengthSeconds - activeSongPoint)}</p>
   </div>
   <div class="flex gap-2 mt-2">
-    <select class="select flex-1 select-bordered select-sm">
-      {#each getDifficultiesForInstrumentInChart(song.chart, "Single") as instrument}
-        <option value={instrument}>{instrument}</option>
+    <select
+      bind:value={$activeSongDifficulty}
+      class="select flex-1 select-bordered select-sm"
+    >
+      {#each getDifficultiesForInstrumentInChart(song.chart, "Single") as difficulty}
+        <option value={difficulty}>{difficulty}</option>
       {/each}
     </select>
-    <select class="select flex-1 select-bordered select-sm">
+    <select
+      bind:value={$activeSongInstrument}
+      class="select flex-1 select-bordered select-sm"
+    >
       {#each getInstrumentsInChart(song.chart) as instrument}
         <option value={instrument}>{instrument}</option>
       {/each}

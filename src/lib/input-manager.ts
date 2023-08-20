@@ -253,6 +253,5 @@ export class InputManager {
   update(): void {
     this.updateGamepads();
     this.updateKeyboard();
-    this.keyboardState = Object.create(null);
   }
 }
