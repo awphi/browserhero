@@ -8,6 +8,7 @@
   } from "../../chorus";
   import { loadSong } from "../../stores";
   import { backOff } from "exponential-backoff";
+  import { toast } from "@zerodevx/svelte-toast";
 
   export let song: ChorusAPISong;
   export let disabled: boolean;
@@ -35,13 +36,8 @@
   async function play(): Promise<void> {
     loadSong(async () => {
       const res = await backOff(fetchSongArchive, {
-        retry: (e, n) => {
-          // TODO toasts for the status of this + disable loading other songs
-          //console.log(e, n);
-          return true;
-        },
         delayFirstAttempt: false,
-        numOfAttempts: 1,
+        numOfAttempts: 5,
       });
       const url = await res.text();
       const song = await loadSongArchiveFromUrl(url);

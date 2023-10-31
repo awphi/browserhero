@@ -17,7 +17,7 @@
     },
     {
       icon: "ph-game-controller",
-      title: "Controls Settings",
+      title: "Input Settings",
       component: ControlsMenu,
     },
   ] as const;
