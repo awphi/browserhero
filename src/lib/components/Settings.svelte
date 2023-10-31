@@ -1,10 +1,6 @@
 <script lang="ts">
   import { difficulties, instruments } from "$lib/chart-parser";
-  import { onMount } from "svelte";
-
-  // TODO connect up the settings to the guitar
-  let lastUpdate = new Date();
-  let speedSlider: number = 1;
+  import { userSettingsState } from "$lib/stores";
 </script>
 
 <div class="flex flex-col h-full">
@@ -12,7 +8,7 @@
     <h1 class="text-3xl">Settings</h1>
     <div class="flex-1" />
     <span class="text-sm text-neutral-content"
-      >Last updated @ {lastUpdate.toLocaleString()}</span
+      >Last updated @ {new Date().toLocaleString()}</span
     >
   </div>
   <hr class="my-2" />
@@ -22,13 +18,19 @@
 
     <div class="settings-grid">
       <span>Preferred Difficulty:</span>
-      <select class="select select-primary select-sm text-primary-content">
+      <select
+        bind:value={$userSettingsState.difficulty}
+        class="select select-primary select-sm text-primary-content"
+      >
         {#each difficulties as diff}
           <option value={diff}>{diff}</option>
         {/each}
       </select>
       <span>Preferred Instrument:</span>
-      <select class="select select-primary text-primary-content select-sm">
+      <select
+        bind:value={$userSettingsState.instrument}
+        class="select select-primary text-primary-content select-sm"
+      >
         {#each instruments as instrument}
           <option value={instrument}>{instrument}</option>
         {/each}
@@ -40,7 +42,7 @@
           min="0.1"
           max="5"
           step="0.1"
-          bind:value={speedSlider}
+          bind:value={$userSettingsState.speed}
           class="range range-primary"
         />
         <div class="flex items-center">
@@ -48,7 +50,7 @@
           <div
             class="bg-primary text-right text-primary-content rounded-md px-2"
           >
-            {speedSlider.toFixed(1)}x
+            {$userSettingsState.speed.toFixed(1)}x
           </div>
         </div>
       </div>

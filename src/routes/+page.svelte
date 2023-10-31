@@ -28,8 +28,8 @@
 
   onMount(() => {
     const testUrl = new URL(
-      //"/mr-brightside.7z",
-      "/cowboys-dont-cry.zip",
+      "/mr-brightside.7z",
+      //"/cowboys-dont-cry.zip",
       import.meta.url
     ).toString();
     loadSong(() => loadSongArchiveFromUrl(testUrl));

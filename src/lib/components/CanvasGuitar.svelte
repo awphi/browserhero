@@ -5,6 +5,7 @@
     activeCombo,
     activeSongInstrument,
     activeSongDifficulty,
+    userSettingsState,
   } from "../stores";
   import { CanvasGuitar } from "$lib/canvas-guitar";
   import { getNoteX, type FretButton, buttonDefs } from "$lib/guitar-utils";
@@ -172,9 +173,14 @@
       buttonRadius
     );
 
+    const cleanup = userSettingsState.subscribe((v) => {
+      guitar.setSpeedMultiplier(v.speed);
+    });
+
     return () => {
       guitar.destroy();
       inputManager.destroy();
+      cleanup();
     };
   });
 

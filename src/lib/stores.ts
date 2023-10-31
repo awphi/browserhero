@@ -1,4 +1,4 @@
-import { writable, type Writable } from "svelte/store";
+import { get, writable, type Writable } from "svelte/store";
 import { tweened } from "svelte/motion";
 import type { SongBundle } from "$lib/song-loader";
 import type { ChorusSongSelectorState } from "$lib/chorus";
@@ -7,6 +7,8 @@ import {
   getDifficultiesForInstrumentInChart,
   getInstrumentsInChart,
 } from "./util";
+import type { UserSettings } from "./types";
+import { storable } from "./storable";
 
 // state for the song selector component
 export const songSelectorState: Writable<ChorusSongSelectorState> = writable({
@@ -15,6 +17,15 @@ export const songSelectorState: Writable<ChorusSongSelectorState> = writable({
   isExtendable: true,
   extendFrom: 0,
 });
+
+export const userSettingsState: Writable<UserSettings> = storable(
+  "bh_settings",
+  {
+    difficulty: "Expert",
+    instrument: "Single",
+    speed: 1,
+  }
+);
 
 // state for the currently selected song
 export const activeSong: Writable<SongBundle | undefined> = writable(undefined);
@@ -32,14 +43,20 @@ export async function loadSong(fn: () => Promise<SongBundle>): Promise<void> {
   activeCombo.set(0);
   try {
     const song = await fn();
-    // TODO select instrument/difficulty based off user preferences
-    const availableInstruments = getInstrumentsInChart(song.chart);
-    const selectedInstrument = availableInstruments[0];
-    const availableDifficulties = getDifficultiesForInstrumentInChart(
+    const settings = get(userSettingsState);
+
+    const availableInst = getInstrumentsInChart(song.chart);
+    const selectedInstrument = availableInst.includes(settings.instrument)
+      ? settings.instrument
+      : availableInst[0];
+
+    const availableDiff = getDifficultiesForInstrumentInChart(
       song.chart,
       selectedInstrument
     );
-    const selectedDifficulty = availableDifficulties[1];
+    const selectedDifficulty = availableDiff.includes(settings.difficulty)
+      ? settings.difficulty
+      : availableDiff[0];
 
     console.log(selectedDifficulty, selectedInstrument);
 
