@@ -71,9 +71,13 @@
   {/if}
 </div>
 
-<style>
+<style lang="postcss">
   .score-display-container {
     left: calc(50% + 400px);
     @apply absolute bottom-[150px];
+  }
+
+  :global(hr) {
+    @apply opacity-20 w-full;
   }
 </style>

@@ -9,6 +9,7 @@ import {
 } from "./util";
 import type { UserSettings } from "./types";
 import { storable } from "./storable";
+import { toast } from "@zerodevx/svelte-toast";
 
 // state for the song selector component
 export const songSelectorState: Writable<ChorusSongSelectorState> = writable({
@@ -41,6 +42,7 @@ export async function loadSong(fn: () => Promise<SongBundle>): Promise<void> {
   activeSongState.set("loading");
   activeScore.set(0);
   activeCombo.set(0);
+  toast.push("Fetching song...");
   try {
     const song = await fn();
     const settings = get(userSettingsState);
@@ -63,8 +65,10 @@ export async function loadSong(fn: () => Promise<SongBundle>): Promise<void> {
     activeSongInstrument.set(selectedInstrument);
     activeSongDifficulty.set(selectedDifficulty);
     activeSong.set(song);
+    toast.pop(0);
+    toast.push("Finished loading song!");
   } catch (e) {
-    // TODO error popup
+    toast.push(`Failed to load song - ${e}.`);
     console.error(e);
     activeSong.set(undefined);
   } finally {

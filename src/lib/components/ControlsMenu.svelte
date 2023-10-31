@@ -11,6 +11,10 @@
 <!-- TODO do a redesign of this before making it functional -->
 
 <div class="flex flex-col h-full">
+  <div class="flex items-end gap-2 text-primary-content">
+    <h1 class="text-3xl">Input Settings</h1>
+  </div>
+  <hr class="my-2" />
   <div
     class="bg-base-100 rounded-md p-2 border border-base-content border-opacity-20"
   >

@@ -5,11 +5,7 @@
 
 <div class="flex flex-col h-full">
   <div class="flex items-end gap-2 text-primary-content">
-    <h1 class="text-3xl">Settings</h1>
-    <div class="flex-1" />
-    <span class="text-sm text-neutral-content"
-      >Last updated @ {new Date().toLocaleString()}</span
-    >
+    <h1 class="text-3xl">User Settings</h1>
   </div>
   <hr class="my-2" />
   <div class="settings-box">
@@ -66,9 +62,5 @@
   .settings-grid {
     grid-template-columns: 1fr 1.5fr;
     @apply grid items-center gap-2;
-  }
-
-  hr {
-    @apply opacity-20 w-full;
   }
 </style>
