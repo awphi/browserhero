@@ -9,6 +9,7 @@ import { findLastTickEvent, tickToTime, timeToTick } from "$lib/chart-utils";
 import { getNoteX, type FretButtonDef } from "./guitar-utils";
 
 const hopoColour = "#F8EFDD";
+const baseSpeed = 1600;
 const openNoteColour = "#76448A";
 const base100Colour = browser
   ? `hsl(${getComputedStyle(document.documentElement).getPropertyValue(
@@ -17,14 +18,13 @@ const base100Colour = browser
   : "black";
 
 export class CanvasGuitar {
-  private readonly speed: number = 1600;
-
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D;
   private readonly parent: HTMLElement;
   private readonly resizeObserver: ResizeObserver;
   private readonly zappedNotes: Set<NoteEvent> = new Set();
 
+  private speed: number = baseSpeed;
   private chart: ParsedChart | undefined;
   private track: ChartTrack | undefined;
   private time: number = 0;
@@ -60,6 +60,11 @@ export class CanvasGuitar {
 
   setTrack(track?: ChartTrack): void {
     this.track = track;
+    this.update(this.time);
+  }
+
+  setSpeedMultiplier(multi: number): void {
+    this.speed = baseSpeed * multi;
     this.update(this.time);
   }
 
